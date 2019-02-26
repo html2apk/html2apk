@@ -1,0 +1,1 @@
+console.log('html2apk')

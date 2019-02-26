@@ -1,0 +1,51 @@
+{
+    "name": "html2apk",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "repository": {
+        "type": "git",
+        "url": "git@github.com:html2apk/html2apk.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/html2apk/html2apk/issues"
+    },
+    "homepage": "https://github.com/html2apk/html2apk/#readme",
+    "devDependencies": {
+        "@types/koa": "^2.0.48",
+        "@types/koa-router": "^7.0.40",
+        "@types/koa-static": "^4.0.1",
+        "@types/node": "^11.9.5",
+        "nodemon": "^1.18.10",
+        "npm-run-all": "^4.1.5",
+        "sass": "^1.17.2",
+        "typescript": "^3.3.3333",
+        "webpack": "^4.29.5",
+        "webpack-cli": "^3.2.3"
+    },
+    "dependencies": {
+        "koa": "^2.7.0",
+        "koa-router": "^7.4.0",
+        "koa-static": "^5.0.0"
+    },
+    "scripts": {
+        "build:tsc": "tsc",
+        "build:sass": "sass sass:s/css",
+        "build": "npm-run-all build:*",
+        "watch:tsc": "tsc -w",
+        "watch:sass": "sass --watch sass:s/css",
+        "watch:webpack": "webpack",
+        "watch": "npm-run-all -p watch:*",
+        "server:node": "nodemon server/index.js",
+        "server:modd": "modd",
+        "server": "npm-run-all -p server:*",
+        "docker:build": "docker build -t gkutiel/html2apk.com .",
+        "docker:run": "docker run -p 4000:8080 -d gkutiel/html2apk.com",
+        "docker:rm": "docker rm $(docker ps -a -q)",
+        "docker:rmi": "docker rmi $(docker images gkutiel/html2apk.com)",
+        "docker:push": "docker push gkutiel/html2apk.com",
+        "start": "npm-run-all build -p watch server"
+    }
+}
