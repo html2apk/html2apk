@@ -6,7 +6,6 @@ export type info = {
 
 export function manifest(info: info) {
     return `
-<?xml version='1.0'?>
 <manifest
     xmlns:a='http://schemas.android.com/apk/res/android' 
     package='${info.package}' 

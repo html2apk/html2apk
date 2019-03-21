@@ -16,11 +16,17 @@
 <body>
     <h1>html2apk</h1>
     <p class='jumbo'>Turn a website into an Android application in seconds.</p>
-    <form action="">
+    <form action="/apk">
+        <!-- url -->
         <label for="url">Url</label>
-        <input id='url' name='url' type="url" placeholder='e.g. https://html2apk' required/>
-        <label for="version">Code Version</label>
-        <input type="number" min='1' required value="1">
+        <input id='url' name='url' type="url" placeholder='e.g. https://html2apk.com/' required/>
+        <!-- label -->
+        <label for="label">Label</label>
+        <input id='label' name='label' type="text" required placeholder="e.g. Cool App" />
+        <!-- versionCode -->
+        <label for="versionCode">Code Version</label>
+        <input id='versionCode' name='versionCode' type="number" min='1' required value="1">
+        <!--  -->
         <input type="submit" value='Download'>
     </form>
 </body>

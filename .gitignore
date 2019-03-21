@@ -1,9 +1,11 @@
 node_modules/
+tools/
+lib/
+
 *.js
 *.css
 *.css
 *.js
 *.map
+
 !webpack.config.js
-server/tools/
-server/lib/
