@@ -1,14 +1,17 @@
 import Koa from 'koa'
 import Router from 'koa-router'
 import koaStatic from 'koa-static'
+import util from 'util'
+const exec = util.promisify(require('child_process').exec);
 
 const app = new Koa();
 const router = new Router()
 
-router.get('/:img/:title/:description/:msg/', html)
+router.get('/apk/', async ctx => {
+    const { stdout, stderr } = await exec('ls');
+    ctx.body = stdout
+})
 
-function html(ctx: Koa.ParameterizedContext) {
-}
 
 app.use(koaStatic('s'))
 app.use(router.routes())
