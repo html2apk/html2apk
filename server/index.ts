@@ -12,6 +12,7 @@ import path from 'path'
 
 const mkdir = util.promisify(fs.mkdir)
 const writeFile = util.promisify(fs.writeFile)
+const symlink = util.promisify(fs.symlink)
 const exec = util.promisify(child_process.exec)
 
 const app = new Koa();
@@ -31,18 +32,33 @@ router.get('/apk/', async ctx => {
         const main = mainActivity(url)
         const activityMain = layout()
         const tmp = path.join('/tmp', Math.random().toString())
+        const res = path.join(tmp, 'res', 'layout')
         const src = path.join(tmp, 'src', ...pkg)
+
+        await mkdir(res, {
+            recursive: true
+        })
+
         await mkdir(src, {
             recursive: true
         })
+
         await writeFile(
             path.join(tmp, 'AndroidManifest.xml')
             , man
         )
+
+        await writeFile(
+            path.join(res, 'activity_main.xml')
+            , activityMain
+        )
+
         await writeFile(
             path.join(src, 'MainActivity.java')
             , mainActivity
         )
+
+        await exec()
         ctx.type = 'text'
         ctx.body = tmp
     } catch (err) {

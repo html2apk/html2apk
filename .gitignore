@@ -1,6 +1,6 @@
 node_modules/
 tools/
-lib/
+android.jar
 
 *.js
 *.css
