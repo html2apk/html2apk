@@ -25,8 +25,7 @@ router.get('/apk/', async ctx => {
         const url = ctx.query.url
         const hostname = urlModule.parse(url).hostname as string
         const pkg = hostname.split('.').reverse()
-        // get from query REMOVE ..
-        const icon = 'lion'
+        const icon = ctx.query.icon
         const man = manifest({
             label: ctx.query.label
             , package: pkg.join('.')
