@@ -29,11 +29,10 @@ router.get('/apk/', async ctx => {
             , package: pkg.join('.')
             , versionCode: ctx.query.versionCode
         })
-        const main = mainActivity(url)
-        const activityMain = layout()
-        const tmp = path.join('/tmp', Math.random().toString())
-        const res = path.join(tmp, 'res', 'layout')
-        const src = path.join(tmp, 'src', ...pkg)
+
+        const build = path.join(__dirname, 'build', Math.random().toString())
+        const res = path.join(build, 'res', 'layout')
+        const src = path.join(build, 'src', ...pkg)
 
         await mkdir(res, {
             recursive: true
@@ -44,23 +43,50 @@ router.get('/apk/', async ctx => {
         })
 
         await writeFile(
-            path.join(tmp, 'AndroidManifest.xml')
+            path.join(build, 'AndroidManifest.xml')
             , man
         )
 
         await writeFile(
             path.join(res, 'activity_main.xml')
-            , activityMain
+            , layout()
         )
 
         await writeFile(
             path.join(src, 'MainActivity.java')
-            , mainActivity
+            , mainActivity(url)
         )
 
-        await exec()
+        await symlink(path.join(__dirname, 'android.jar'), path.join(build, 'android.jar'))
+
+        await exec(
+            'aapt package -f -m -J src -M AndroidManifest.xml -S res -I android.jar'
+            , { cwd: build }
+        )
+        await exec(
+            `javac -cp src ${src}/*.java -bootclasspath android.jar -d bin`
+            , { cwd: build }
+        )
+        await exec(
+            'tools/dx --dex --output=classes.dex bin'
+            , { cwd: build }
+        )
+        await exec(
+            'aapt package -f -m -F output.apk -M AndroidManifest.xml -S res -I android.jar'
+            , { cwd: build }
+        )
+        await exec(
+            'aapt add output.apk classes.dex'
+            , { cwd: build }
+        )
+        await exec(
+            'tools/apksigner sign --ks mykey.keystore -ks-pass pass:123456 output.apk'
+            , { cwd: build }
+        )
+
+
         ctx.type = 'text'
-        ctx.body = tmp
+        ctx.body = build
     } catch (err) {
         ctx.body = err
     }

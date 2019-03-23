@@ -38,7 +38,7 @@
         "watch:sass": "sass --watch sass:s/css",
         "watch:webpack": "webpack",
         "watch": "npm-run-all -p watch:*",
-        "server:node": "nodemon server/index.js",
+        "server:node": "nodemon index.js",
         "server:modd": "modd",
         "server": "npm-run-all -p server:*",
         "docker:build": "docker build -t gkutiel/html2apk.com .",
