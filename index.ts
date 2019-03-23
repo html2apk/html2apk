@@ -103,7 +103,7 @@ router.get('/apk/', async ctx => {
             , { cwd: build }
         )
         await exec(
-            'tools/zipalign -f 4 tmp.apk bin/final.apk'
+            'tools/zipalign -f 4 tmp.apk final.apk'
             , { cwd: build }
         )
         await exec(

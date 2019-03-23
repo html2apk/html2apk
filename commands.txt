@@ -1,0 +1,2 @@
+# convert svg to png
+for f in $(ls *.svg); do convert -background none -size 256x256 $f ${f/svg/png}; done
