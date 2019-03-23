@@ -48,14 +48,20 @@ input[type=submit] {
 
 #icons {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin: 1em 0;
 }
 
 #icons label {
     width: 64px;
     height: 64px;
-    margin-right: 1em;
+    margin: 1em;
     opacity: .5;
     cursor: pointer;
+    &:hover {
+        opacity: .8;
+    }
 }
 
 #icons input[type=radio] {

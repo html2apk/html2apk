@@ -1,2 +1,5 @@
 # convert svg to png
 for f in $(ls *.svg); do convert -background none -size 256x256 $f ${f/svg/png}; done
+
+# embed icons in html
+for f in $(ls *.svg); do echo "<input id='${f/.svg/}' required type='radio' name='icon' value='${f/.svg/}'/><label for='${f/.svg/}'>"; tail -n +3 $f; echo "</label>"; done
