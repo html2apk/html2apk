@@ -1,0 +1,67 @@
+@import 'color';
+@import url('https://fonts.googleapis.com/css?family=Comfortaa');
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    font-family: 'Comfortaa', cursive;
+    color: #333;
+}
+
+.content {
+    max-width: 40em;
+    margin: 2em auto;
+}
+
+input {
+    display: block;
+    margin: 1em 0;
+    padding: .5em;
+    width: 100%;
+    font-size: 1em;
+}
+
+input[type=submit],
+input[type=radio] {
+    width: auto;
+}
+
+input[type=submit] {
+    box-shadow: none;
+    border: none;
+    cursor: pointer;
+}
+
+.success {
+    background-color: $color-success;
+    color: white;
+}
+
+#icons {
+    display: flex;
+}
+
+#icons label {
+    width: 64px;
+    height: 64px;
+    margin-right: 1em;
+    opacity: .5;
+    cursor: pointer;
+}
+
+#icons input[type=radio] {
+    width: 1px;
+    opacity: 0;
+    &:checked+label {
+        opacity: 1;
+    }
+}
