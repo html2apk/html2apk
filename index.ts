@@ -4,8 +4,8 @@ import koaStatic from 'koa-static'
 import util from 'util'
 import urlModule from 'url'
 import { manifest } from './templates/AndroidManifest.xml'
-import { mainActivity } from './templates/MainActivity.java';
-import { layout } from './templates/activity_main.xml';
+import { mainActivity } from './templates/MainActivity.java'
+import { layout } from './templates/activity_main.xml'
 import child_process from 'child_process'
 import fs from 'fs'
 import path from 'path'
@@ -31,10 +31,11 @@ router.get('/apk/', async ctx => {
         })
 
         const build = path.join(__dirname, 'build', Math.random().toString())
-        const res = path.join(build, 'res', 'layout')
+        const res = path.join(build, 'res')
+        const resLayout = path.join(res, 'layout')
         const src = path.join(build, 'src', ...pkg)
 
-        await mkdir(res, {
+        await mkdir(resLayout, {
             recursive: true
         })
 
@@ -42,13 +43,23 @@ router.get('/apk/', async ctx => {
             recursive: true
         })
 
+        await symlink(
+            path.join(__dirname, 'android.jar')
+            , path.join(build, 'android.jar')
+        )
+
+        await symlink(
+            path.join(__dirname, 'icons')
+            , path.join(res, 'drawable')
+        )
+
         await writeFile(
             path.join(build, 'AndroidManifest.xml')
             , man
         )
 
         await writeFile(
-            path.join(res, 'activity_main.xml')
+            path.join(resLayout, 'activity_main.xml')
             , layout()
         )
 
@@ -56,8 +67,6 @@ router.get('/apk/', async ctx => {
             path.join(src, 'MainActivity.java')
             , mainActivity(url)
         )
-
-        await symlink(path.join(__dirname, 'android.jar'), path.join(build, 'android.jar'))
 
         await exec(
             'aapt package -f -m -J src -M AndroidManifest.xml -S res -I android.jar'
