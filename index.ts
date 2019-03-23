@@ -62,6 +62,11 @@ router.get('/apk/', async ctx => {
             , path.join(res, 'drawable')
         )
 
+        await symlink(
+            path.join(__dirname, 'mykey.keystore')
+            , path.join(build, 'mykey.keystore')
+        )
+
         await writeFile(
             path.join(build, 'AndroidManifest.xml')
             , man
