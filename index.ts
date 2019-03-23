@@ -58,7 +58,7 @@ router.get('/apk/', async ctx => {
         )
 
         await symlink(
-            path.join(__dirname, 'icons')
+            path.join(__dirname, 'png')
             , path.join(res, 'drawable')
         )
 
@@ -95,15 +95,19 @@ router.get('/apk/', async ctx => {
             , { cwd: build }
         )
         await exec(
-            'tools/aapt package -f -m -F output.apk -M AndroidManifest.xml -S res -I android.jar'
+            'tools/aapt package -f -m -F tmp.apk -M AndroidManifest.xml -S res -I android.jar'
             , { cwd: build }
         )
         await exec(
-            'tools/aapt add output.apk classes.dex'
+            'tools/aapt add tmp.apk classes.dex'
             , { cwd: build }
         )
         await exec(
-            'tools/apksigner sign --ks mykey.keystore -ks-pass pass:123456 output.apk'
+            'tools/zipalign -f 4 tmp.apk bin/final.apk'
+            , { cwd: build }
+        )
+        await exec(
+            'tools/apksigner sign --ks mykey.keystore -ks-pass pass:123456 final.apk'
             , { cwd: build }
         )
 
