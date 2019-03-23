@@ -1,6 +1,6 @@
-export function mainActivity(url: string) {
+export function mainActivity(pkg: string, url: string) {
     return `
-package com.funkymsg;
+package ${pkg};
 
 import android.net.Uri;
 import android.app.Activity;

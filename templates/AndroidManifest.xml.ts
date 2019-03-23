@@ -19,7 +19,7 @@ export function manifest(info: info) {
           a:maxSdkVersion="28" />
 
     <application a:label='${info.label}' 
-        a:icon="@drawable/icon">
+        a:icon="@drawable/lion">
         <activity a:name='${info.package}.MainActivity'>
             <intent-filter>
                 <category a:name='android.intent.category.LAUNCHER'/>

@@ -19,8 +19,8 @@ const app = new Koa();
 const router = new Router()
 
 router.get('/apk/', async ctx => {
+    const build = path.join(__dirname, 'build', Math.random().toString())
     try {
-        const { stdout } = await exec('ls')
         const url = ctx.query.url
         const hostname = urlModule.parse(url).hostname as string
         const pkg = hostname.split('.').reverse()
@@ -30,10 +30,10 @@ router.get('/apk/', async ctx => {
             , versionCode: ctx.query.versionCode
         })
 
-        const build = path.join(__dirname, 'build', Math.random().toString())
         const res = path.join(build, 'res')
         const resLayout = path.join(res, 'layout')
         const src = path.join(build, 'src', ...pkg)
+        const bin = path.join(build, 'bin')
 
         await mkdir(resLayout, {
             recursive: true
@@ -43,9 +43,18 @@ router.get('/apk/', async ctx => {
             recursive: true
         })
 
+        await mkdir(bin, {
+            recursive: true
+        })
+
         await symlink(
             path.join(__dirname, 'android.jar')
             , path.join(build, 'android.jar')
+        )
+
+        await symlink(
+            path.join(__dirname, 'tools')
+            , path.join(build, 'tools')
         )
 
         await symlink(
@@ -65,11 +74,11 @@ router.get('/apk/', async ctx => {
 
         await writeFile(
             path.join(src, 'MainActivity.java')
-            , mainActivity(url)
+            , mainActivity(pkg.join('.'), url)
         )
 
         await exec(
-            'aapt package -f -m -J src -M AndroidManifest.xml -S res -I android.jar'
+            'tools/aapt package -f -m -J src -M AndroidManifest.xml -S res -I android.jar'
             , { cwd: build }
         )
         await exec(
@@ -81,11 +90,11 @@ router.get('/apk/', async ctx => {
             , { cwd: build }
         )
         await exec(
-            'aapt package -f -m -F output.apk -M AndroidManifest.xml -S res -I android.jar'
+            'tools/aapt package -f -m -F output.apk -M AndroidManifest.xml -S res -I android.jar'
             , { cwd: build }
         )
         await exec(
-            'aapt add output.apk classes.dex'
+            'tools/aapt add output.apk classes.dex'
             , { cwd: build }
         )
         await exec(
@@ -97,6 +106,7 @@ router.get('/apk/', async ctx => {
         ctx.type = 'text'
         ctx.body = build
     } catch (err) {
+        err.cwd = build
         ctx.body = err
     }
 })
