@@ -13,6 +13,7 @@ import path from 'path'
 const mkdir = util.promisify(fs.mkdir)
 const writeFile = util.promisify(fs.writeFile)
 const symlink = util.promisify(fs.symlink)
+const copyFile = util.promisify(fs.copyFile)
 const exec = util.promisify(child_process.exec)
 
 const app = new Koa();
@@ -24,28 +25,27 @@ router.get('/apk/', async ctx => {
         const url = ctx.query.url
         const hostname = urlModule.parse(url).hostname as string
         const pkg = hostname.split('.').reverse()
+        // get from query REMOVE ..
+        const icon = 'lion'
         const man = manifest({
             label: ctx.query.label
             , package: pkg.join('.')
             , versionCode: ctx.query.versionCode
+            , icon: icon
         })
 
-        const res = path.join(build, 'res')
-        const resLayout = path.join(res, 'layout')
-        const src = path.join(build, 'src', ...pkg)
-        const bin = path.join(build, 'bin')
+        const dir: { [name: string]: string } = {
+            layout: path.join(build, 'res', 'layout')
+            , drawable: path.join(build, 'res', 'drawable')
+            , src: path.join(build, 'src', ...pkg)
+            , bin: path.join(build, 'bin')
+        }
 
-        await mkdir(resLayout, {
-            recursive: true
-        })
-
-        await mkdir(src, {
-            recursive: true
-        })
-
-        await mkdir(bin, {
-            recursive: true
-        })
+        for (const k in dir) {
+            await mkdir(dir[k], {
+                recursive: true
+            })
+        }
 
         await symlink(
             path.join(__dirname, 'android.jar')
@@ -58,13 +58,13 @@ router.get('/apk/', async ctx => {
         )
 
         await symlink(
-            path.join(__dirname, 'png')
-            , path.join(res, 'drawable')
-        )
-
-        await symlink(
             path.join(__dirname, 'mykey.keystore')
             , path.join(build, 'mykey.keystore')
+        )
+
+        await copyFile(
+            path.join(__dirname, 'png', `${icon}.png`)
+            , path.join(dir.drawable, `${icon}.png`)
         )
 
         await writeFile(
@@ -73,12 +73,12 @@ router.get('/apk/', async ctx => {
         )
 
         await writeFile(
-            path.join(resLayout, 'activity_main.xml')
+            path.join(dir.layout, 'activity_main.xml')
             , layout()
         )
 
         await writeFile(
-            path.join(src, 'MainActivity.java')
+            path.join(dir.src, 'MainActivity.java')
             , mainActivity(pkg.join('.'), url)
         )
 
@@ -87,7 +87,7 @@ router.get('/apk/', async ctx => {
             , { cwd: build }
         )
         await exec(
-            `javac -cp src ${src}/*.java -bootclasspath android.jar -d bin`
+            `javac -cp src ${dir.src}/*.java -bootclasspath android.jar -d bin`
             , { cwd: build }
         )
         await exec(

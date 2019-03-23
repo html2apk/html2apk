@@ -2,6 +2,7 @@ export type info = {
     package: string
     versionCode: number
     label: string
+    icon: string
 }
 
 export function manifest(info: info) {
@@ -19,7 +20,7 @@ export function manifest(info: info) {
           a:maxSdkVersion="28" />
 
     <application a:label='${info.label}' 
-        a:icon="@drawable/lion">
+        a:icon="@drawable/${info.icon}">
         <activity a:name='${info.package}.MainActivity'>
             <intent-filter>
                 <category a:name='android.intent.category.LAUNCHER'/>
