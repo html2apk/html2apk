@@ -14,6 +14,7 @@ const mkdir = util.promisify(fs.mkdir)
 const writeFile = util.promisify(fs.writeFile)
 const symlink = util.promisify(fs.symlink)
 const copyFile = util.promisify(fs.copyFile)
+const readFile = util.promisify(fs.readFile)
 const exec = util.promisify(child_process.exec)
 
 const app = new Koa();
@@ -111,8 +112,9 @@ router.get('/apk/', async ctx => {
         )
 
 
-        ctx.type = 'text'
-        ctx.body = build
+        ctx.type = 'application/vnd.android.package-archive'
+        const apk = await readFile(path.join(build, 'final.apk'))
+        ctx.body = apk
     } catch (err) {
         err.cwd = build
         ctx.body = err

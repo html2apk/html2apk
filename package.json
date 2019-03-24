@@ -43,7 +43,7 @@
         "server": "npm-run-all -p server:*",
         "docker:build": "docker build -t gkutiel/html2apk.com .",
         "docker:run": "docker run -p 4000:8080 -d gkutiel/html2apk.com",
-        "docker:rm": "docker rm $(docker ps -a -q)",
+        "docker:rm": "docker rm -f $(docker ps -a -q)",
         "docker:rmi": "docker rmi $(docker images gkutiel/html2apk.com)",
         "docker:push": "docker push gkutiel/html2apk.com",
         "start": "npm-run-all build -p watch server"
