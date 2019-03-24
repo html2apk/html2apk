@@ -3,3 +3,6 @@ for f in $(ls *.svg); do convert -background none -size 256x256 $f ${f/svg/png};
 
 # embed icons in html
 for f in $(ls *.svg); do echo "<input id='${f/.svg/}' required type='radio' name='icon' value='${f/.svg/}'/><label for='${f/.svg/}'>"; tail -n +3 $f; echo "</label>"; done
+
+# generate Feature Graphic
+convert image.svg -resize 256x256 -gravity center -background "rgb(255,255,255)" -extent 1024x500 out.png
