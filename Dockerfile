@@ -1,13 +1,7 @@
-FROM gkutiel/node-android
+FROM gkutiel/html2apk-base
 
-# Install app dependencies
-COPY package*.json ./
-
-# RUN npm install
-RUN npm ci --only=production
-
-# Bundle app source
-COPY . .
+COPY index.js .
+COPY s .
 
 EXPOSE 8080
 CMD ["node","index.js"]
