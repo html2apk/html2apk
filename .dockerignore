@@ -1,3 +1,6 @@
 node_modules
+tools
+android.jar
 npm-debug.log
 *.ts
+*.scss
