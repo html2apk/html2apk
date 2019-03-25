@@ -1,73 +1,93 @@
-@import 'color';
-@import url('https://fonts.googleapis.com/css?family=Comfortaa');
+@import "color";
+@import url("https://fonts.googleapis.com/css?family=Comfortaa");
 * {
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 html,
 body {
-    height: 100%;
-    width: 100%;
-    padding: 0;
-    margin: 0;
+  height: 100%;
+  width: 100%;
+  padding: 0;
+  margin: 0;
 }
 
 body {
-    font-family: 'Comfortaa', cursive;
-    color: #333;
+  font-family: "Comfortaa", cursive;
+  color: #333;
 }
 
 .content {
-    max-width: 40em;
-    margin: 2em auto;
+  max-width: 40em;
+  margin: 2em auto;
+  line-height: 1.7em;
+}
+
+.menu {
+  display: flex;
+  flex-direction: row-reverse;
+}
+
+a {
+  color: $color-info;
+  text-decoration: none;
+  font-weight: bold;
+  &:hover {
+    color: $color-success;
+  }
 }
 
 input {
-    display: block;
-    margin: 1em 0;
-    padding: .5em;
-    width: 100%;
-    font-size: 1em;
+  display: block;
+  margin: 1em 0;
+  padding: 0.5em;
+  width: 100%;
+  font-size: 1em;
 }
 
-input[type=submit],
-input[type=radio] {
-    width: auto;
+input[type="submit"],
+input[type="radio"] {
+  width: auto;
 }
 
-input[type=submit] {
-    box-shadow: none;
-    border: none;
-    cursor: pointer;
+input[type="submit"] {
+  box-shadow: none;
+  border: none;
+  cursor: pointer;
 }
 
 .success {
-    background-color: $color-success;
-    color: white;
+  background-color: $color-success;
+  color: white;
 }
 
 #icons {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    margin: 1em 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin: 1em 0;
 }
 
 #icons label {
-    width: 64px;
-    height: 64px;
-    margin: 1em;
-    opacity: .5;
-    cursor: pointer;
-    &:hover {
-        opacity: .8;
-    }
+  width: 64px;
+  height: 64px;
+  margin: 1em;
+  opacity: 0.5;
+  cursor: pointer;
+  &:hover {
+    opacity: 0.8;
+  }
 }
 
-#icons input[type=radio] {
-    width: 1px;
-    opacity: 0;
-    &:checked+label {
-        opacity: 1;
-    }
+#icons input[type="radio"] {
+  width: 1px;
+  opacity: 0;
+  &:checked + label {
+    opacity: 1;
+  }
+}
+
+.q {
+  font-weight: bold;
+  font-size: 1.1em;
 }
