@@ -9,6 +9,5 @@ RUN npm ci --only=production
 # Bundle app source
 RUN mkdir build
 COPY png png
-COPY templates templates
 COPY mykey.keystore .
 
