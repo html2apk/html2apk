@@ -1,0 +1,3626 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Чернобыльская АЭС - Точная модель катастрофы 26 апреля</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background: #000;
+            font-family: 'Arial', sans-serif;
+            touch-action: none;
+        }
+        canvas { 
+            display: block; 
+            cursor: grab;
+            width: 100%;
+            height: 100%;
+        }
+        canvas:active {
+            cursor: grabbing;
+        }
+        .info-panel {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            color: white;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #ff4444;
+            max-width: 350px;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+        .status-indicator {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+            text-align: center;
+        }
+        .normal { background: #4CAF50; }
+        .warning { background: #ff9800; }
+        .critical { background: #f44336; }
+        .catastrophe { background: #d32f2f; }
+        
+        .timer {
+            font-size: 18px;
+            color: #ff9800;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        .compact-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .compact-controls button {
+            padding: 8px 12px;
+            font-size: 12px;
+            margin: 0;
+            background: linear-gradient(45deg, #2196F3, #21CBF3);
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .compact-controls button.active {
+            background: linear-gradient(45deg, #FF9800, #FFC107);
+        }
+        
+        .reactor-controls {
+            position: absolute;
+            bottom: 25px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .reactor-controls button {
+            background: linear-gradient(45deg, #ff4444, #ff6b6b);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3);
+        }
+        
+        .reactor-controls button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 68, 68, 0.4);
+        }
+        
+        .reactor-controls button:last-child {
+            background: linear-gradient(45deg, #4CAF50, #8BC34A);
+        }
+        
+        .camera-hint {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 100;
+        }
+        
+        .reactor-panel {
+            position: absolute;
+            bottom: 25px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            backdrop-filter: blur(10px);
+            width: 250px;
+            z-index: 100;
+            border: 2px solid #ff4444;
+        }
+        
+        .reactor-panel h3 {
+            margin: 0 0 12px 0;
+            text-align: center;
+            color: #ff9800;
+            border-bottom: 1px solid #444;
+            padding-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .reactor-parameter {
+            margin: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+        
+        .reactor-parameter label {
+            font-weight: bold;
+            color: #ff9800;
+        }
+        
+        .reactor-value {
+            font-family: 'Courier New', monospace;
+            background: #222;
+            padding: 4px 8px;
+            border-radius: 4px;
+            min-width: 60px;
+            text-align: center;
+            font-size: 11px;
+        }
+        
+        .reactor-slider {
+            width: 100%;
+            margin: 3px 0;
+            height: 6px;
+        }
+        
+        .az5-button {
+            background: linear-gradient(45deg, #ff4444, #ff6b6b);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 8px;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        
+        .az5-button:hover {
+            background: linear-gradient(45deg, #ff2222, #ff5555);
+            transform: translateY(-2px);
+        }
+        
+        .parameter-warning {
+            color: #ff9800;
+            font-size: 10px;
+            text-align: center;
+            margin-top: 3px;
+        }
+        
+        .parameter-critical {
+            color: #ff4444;
+            font-size: 10px;
+            text-align: center;
+            margin-top: 3px;
+            font-weight: bold;
+        }
+        
+        .sound-controls {
+            position: absolute;
+            bottom: 15px;
+            right: 200px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 10px;
+            border-radius: 10px;
+            color: white;
+            backdrop-filter: blur(10px);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .sound-controls button {
+            background: linear-gradient(45deg, #9C27B0, #E91E63);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        
+        /* Мобильные стили */
+        @media (max-width: 768px) {
+            .info-panel {
+                max-width: 280px;
+                padding: 15px;
+                font-size: 14px;
+            }
+            
+            .compact-controls {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                width: calc(100% - 30px);
+                right: 15px;
+                top: auto;
+                bottom: 150px;
+            }
+            
+            .compact-controls button {
+                flex: 1;
+                min-width: 80px;
+                font-size: 10px;
+                padding: 6px 8px;
+            }
+            
+            .reactor-panel {
+                width: calc(100% - 30px);
+                bottom: 300px;
+                left: 15px;
+            }
+            
+            .reactor-controls {
+                bottom: 15px;
+                right: 15px;
+                width: calc(100% - 30px);
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            
+            .reactor-controls button {
+                flex: 1;
+                min-width: 100px;
+                font-size: 11px;
+                padding: 8px 10px;
+            }
+            
+            .sound-controls {
+                bottom: 80px;
+                right: 15px;
+                width: calc(100% - 30px);
+                justify-content: center;
+            }
+            
+            .camera-hint {
+                display: none;
+            }
+            
+            .timer {
+                font-size: 16px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .info-panel {
+                max-width: 220px;
+                padding: 10px;
+                font-size: 12px;
+            }
+            
+            .compact-controls button {
+                font-size: 9px;
+                padding: 5px 6px;
+            }
+            
+            .reactor-panel {
+                bottom: 320px;
+            }
+            
+            .reactor-controls button {
+                font-size: 10px;
+                padding: 6px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="info-panel">
+        <h2>⚡ Чернобыльская АЭС - 4-й энергоблок</h2>
+        <div class="timestamp">26 апреля 1986, 01:23:45</div>
+        
+        <div class="status-indicator normal" id="statusIndicator">
+            <span id="statusText">НОРМАЛЬНАЯ РАБОТА</span>
+        </div>
+        
+        <div class="timer" id="timer">
+            Время после взрыва: <span id="timeValue">0.0</span>с
+        </div>
+        
+        <div id="phaseDescription">Реактор РБМК-1000 работает в штатном режиме.</div>
+    </div>
+
+    <div class="compact-controls">
+        <button class="active" onclick="switchToStation()">🏭 Станция</button>
+        <button onclick="switchToCity()">🏙️ Город</button>
+        <button onclick="switchToSettlement()">🏘️ Поселение</button>
+        <button onclick="switchToBridge()">🌉 Мост</button>
+        <button onclick="toggleDayNight()">🌓 День/Ночь</button>
+    </div>
+
+    <div class="reactor-controls">
+        <button onclick="startExplosionSequence()">💥 ЗАПУСК ВЗРЫВА</button>
+        <button onclick="spawnEmergencyVehicles()">🚒 ВЫЗВАТЬ ТЕХНИКУ</button>
+        <button onclick="startRebuildSequence()">🏗️ ВОССТАНОВИТЬ</button>
+    </div>
+
+    <div class="sound-controls">
+        <button onclick="toggleAmbientSound()">🔊 Фон</button>
+        <button onclick="playExplosionSound()">💥 Взрыв</button>
+        <button onclick="playSirenSound()">🚨 Сирена</button>
+    </div>
+
+    <div class="reactor-panel">
+        <h3>ПУЛЬТ УПРАВЛЕНИЯ РЕАКТОРОМ</h3>
+        
+        <div class="reactor-parameter">
+            <label>Мощность (МВт):</label>
+            <div class="reactor-value" id="powerValue">700</div>
+        </div>
+        <input type="range" min="0" max="1000" value="700" class="reactor-slider" id="powerSlider" oninput="updatePower(this.value)">
+        
+        <div class="reactor-parameter">
+            <label>Стержни (шт):</label>
+            <div class="reactor-value" id="rodsValue">187</div>
+        </div>
+        <input type="range" min="0" max="211" value="187" class="reactor-slider" id="rodsSlider" oninput="updateRods(this.value)">
+        
+        <div class="reactor-parameter">
+            <label>Реактивность (β):</label>
+            <div class="reactor-value" id="reactivityValue">0.5</div>
+        </div>
+        <div id="reactivityWarning" class="parameter-warning">Нормальная реактивность</div>
+        
+        <button class="az5-button" onclick="activateAZ5()">⛔ АЗ-5 (АВАРИЙНАЯ ЗАЩИТА)</button>
+        <div id="az5Warning" class="parameter-warning">Нажмите для экстренной остановки реактора</div>
+    </div>
+
+    <div class="camera-hint">
+        Управление камерой: ЛКМ + движение - вращение, Колесо мыши - приближение
+    </div>
+
+    <!-- Аудио элементы -->
+    <audio id="ambientSound" loop>
+        <source src="https://assets.mixkit.co/active_storage/sfx/250/250-preview.mp3" type="audio/mp3">
+    </audio>
+    <audio id="explosionSound">
+        <source src="https://assets.mixkit.co/active_storage/sfx/245/245-preview.mp3" type="audio/mp3">
+    </audio>
+    <audio id="sirenSound" loop>
+        <source src="https://assets.mixkit.co/active_storage/sfx/250/250-preview.mp3" type="audio/mp3">
+    </audio>
+    <audio id="nuclearAlarm">
+        <source src="https://assets.mixkit.co/active_storage/sfx/250/250-preview.mp3" type="audio/mp3">
+    </audio>
+    <audio id="vehicleSound" loop>
+        <source src="https://assets.mixkit.co/active_storage/sfx/250/250-preview.mp3" type="audio/mp3">
+    </audio>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Инициализация сцены
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 50, 100);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        // Звуковая система
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        let isAmbientSoundPlaying = false;
+
+        function toggleAmbientSound() {
+            const ambientSound = document.getElementById('ambientSound');
+            if (isAmbientSoundPlaying) {
+                ambientSound.pause();
+                isAmbientSoundPlaying = false;
+            } else {
+                ambientSound.play().catch(e => console.log('Audio play failed:', e));
+                isAmbientSoundPlaying = true;
+            }
+        }
+
+        function playExplosionSound() {
+            const explosionSound = document.getElementById('explosionSound');
+            explosionSound.currentTime = 0;
+            explosionSound.play().catch(e => console.log('Audio play failed:', e));
+        }
+
+        function playSirenSound() {
+            const sirenSound = document.getElementById('sirenSound');
+            if (sirenSound.paused) {
+                sirenSound.play().catch(e => console.log('Audio play failed:', e));
+            } else {
+                sirenSound.pause();
+                sirenSound.currentTime = 0;
+            }
+        }
+
+        function playNuclearAlarm() {
+            const nuclearAlarm = document.getElementById('nuclearAlarm');
+            nuclearAlarm.currentTime = 0;
+            nuclearAlarm.play().catch(e => console.log('Audio play failed:', e));
+        }
+
+        // Освещение
+        let sunLight, ambientLight;
+        let isDayMode = true;
+        let currentLocation = 'station';
+
+        // Переменные для анимации
+        let settlementPeople = [];
+        let stationPeople = [];
+        let cityPeople = [];
+        let cityVehicles = [];
+        let emergencyVehicles = [];
+        let machineHallEquipment = [];
+        let streetLights = [];
+        let buildingLights = [];
+        let explosionEffects = [];
+        let smokeParticles = [];
+        let fireEffects = [];
+        let radioactiveCloud = null;
+        let steamParticles = [];
+        let tecSmokeParticles = [];
+        let reactorRods = [];
+        let unit4Destroyed = false;
+        let stationLightsOn = true;
+        let evacuationStarted = false;
+        let debrisParticles = [];
+        let destroyedUnit4 = null;
+        let coolingTowerSteam = [];
+        let blackSmokeParticles = [];
+
+        // Параметры реактора для пара
+        const reactorBounds = {
+            minX: -4,
+            maxX: 4,
+            minY: 2,
+            maxY: 8,
+            minZ: -4,
+            maxZ: 4
+        };
+
+        // Переменные управления реактором
+        const reactorState = {
+            power: 700,
+            controlRods: 187,
+            reactivity: 0.5,
+            az5Activated: false,
+            explosionTriggered: false
+        };
+
+        // Переменные управления
+        const controls = {
+            explosionStarted: false,
+            explosionTime: 0,
+            autoRotate: false,
+            lightsOn: true,
+            earthquakeActive: false,
+            processesStopped: false
+        };
+
+        // Создание земли с речной системой
+        function createGround() {
+            const groundGroup = new THREE.Group();
+            
+            const mainGround = new THREE.Mesh(
+                new THREE.PlaneGeometry(2000, 2000),
+                new THREE.MeshPhongMaterial({ color: 0xd2b48c })
+            );
+            mainGround.rotation.x = -Math.PI / 2;
+            mainGround.position.y = -0.1;
+            groundGroup.add(mainGround);
+            
+            const stationGround = new THREE.Mesh(
+                new THREE.PlaneGeometry(400, 400),
+                new THREE.MeshPhongMaterial({ color: 0x888888 })
+            );
+            stationGround.rotation.x = -Math.PI / 2;
+            stationGround.position.set(0, 0, 0);
+            groundGroup.add(stationGround);
+            
+            const cityGround = new THREE.Mesh(
+                new THREE.PlaneGeometry(800, 800),
+                new THREE.MeshPhongMaterial({ color: 0x44aa44 })
+            );
+            cityGround.rotation.x = -Math.PI / 2;
+            cityGround.position.set(200, 0, -300);
+            groundGroup.add(cityGround);
+            
+            const settlementGround = new THREE.Mesh(
+                new THREE.PlaneGeometry(400, 400),
+                new THREE.MeshPhongMaterial({ color: 0x44aa44 })
+            );
+            settlementGround.rotation.x = -Math.PI / 2;
+            settlementGround.position.set(600, 0, -300);
+            groundGroup.add(settlementGround);
+
+            // Создаем сложную речную систему
+            createRiverSystem(groundGroup);
+
+            // Водоём возле станции (соединен с рекой)
+            const stationPond = createPond(120, 80);
+            stationPond.position.set(150, 0.1, 100);
+            groundGroup.add(stationPond);
+
+            // Канал соединяющий водоём с рекой
+            const canal1 = new THREE.Mesh(
+                new THREE.PlaneGeometry(80, 8),
+                new THREE.MeshPhongMaterial({ color: 0x0066cc, transparent: true, opacity: 0.8 })
+            );
+            canal1.rotation.x = -Math.PI / 2;
+            canal1.position.set(190, 0.1, 140);
+            groundGroup.add(canal1);
+
+            // Дороги от города к станции и к поселению
+            createRoadsToStation(groundGroup);
+
+            return groundGroup;
+        }
+
+        // Создание дорог от города к станции и к поселению
+        function createRoadsToStation(groundGroup) {
+            const roadMaterial = new THREE.MeshPhongMaterial({ color: 0x222222 });
+            
+            // Главная дорога от города к станции
+            const mainRoad = new THREE.Mesh(
+                new THREE.BoxGeometry(400, 0.2, 12),
+                roadMaterial
+            );
+            mainRoad.position.set(100, 0.1, -190);
+            mainRoad.rotation.y = Math.PI / 2;
+            groundGroup.add(mainRoad);
+            
+            // Подъездные дороги к станции
+            const stationRoad1 = new THREE.Mesh(
+                new THREE.BoxGeometry(200, 0.2, 8),
+                roadMaterial
+            );
+            stationRoad1.position.set(-50, 0.1, -80);
+            groundGroup.add(stationRoad1);
+            
+            const stationRoad2 = new THREE.Mesh(
+                new THREE.BoxGeometry(150, 0.2, 8),
+                roadMaterial
+            );
+            stationRoad2.position.set(50, 0.1, -50);
+            stationRoad2.rotation.y = Math.PI / 4;
+            groundGroup.add(stationRoad2);
+            
+            // Дорога от станции к поселению через мост
+            const roadToSettlement = new THREE.Mesh(
+                new THREE.BoxGeometry(600, 0.2, 8),
+                roadMaterial
+            );
+            roadToSettlement.position.set(200, 0.1, -100);
+            roadToSettlement.rotation.y = Math.PI / 2;
+            groundGroup.add(roadToSettlement);
+        }
+
+        // Создание речной системы
+        function createRiverSystem(groundGroup) {
+            // Главная большая река
+            const mainRiver = new THREE.Mesh(
+                new THREE.PlaneGeometry(50, 2500),
+                new THREE.MeshPhongMaterial({ color: 0x0066cc, transparent: true, opacity: 0.8 })
+            );
+            mainRiver.rotation.x = -Math.PI / 2;
+            mainRiver.position.set(500, 0.1, 0);
+            groundGroup.add(mainRiver);
+
+            // Приток к основной реке
+            const tributary = new THREE.Mesh(
+                new THREE.PlaneGeometry(25, 600),
+                new THREE.MeshPhongMaterial({ color: 0x0066cc, transparent: true, opacity: 0.8 })
+            );
+            tributary.rotation.x = -Math.PI / 2;
+            tributary.rotation.z = Math.PI / 4;
+            tributary.position.set(300, 0.1, -400);
+            groundGroup.add(tributary);
+
+            // Берега рек
+            const riverBanks = [
+                { position: [477.5, 0.05, 0], size: [5, 2500] },
+                { position: [522.5, 0.05, 0], size: [5, 2500] },
+                { position: [287.5, 0.05, -400], size: [3, 600], rotation: Math.PI/4 },
+                { position: [312.5, 0.05, -400], size: [3, 600], rotation: Math.PI/4 }
+            ];
+
+            riverBanks.forEach(bank => {
+                const bankMesh = new THREE.Mesh(
+                    new THREE.PlaneGeometry(bank.size[0], bank.size[1]),
+                    new THREE.MeshPhongMaterial({ color: 0xc2b280 })
+                );
+                bankMesh.rotation.x = -Math.PI / 2;
+                if (bank.rotation) bankMesh.rotation.z = bank.rotation;
+                bankMesh.position.set(bank.position[0], bank.position[1], bank.position[2]);
+                groundGroup.add(bankMesh);
+            });
+        }
+
+        // Создание водоёма
+        function createPond(width, height) {
+            const pondGroup = new THREE.Group();
+            
+            const pond = new THREE.Mesh(
+                new THREE.PlaneGeometry(width, height),
+                new THREE.MeshPhongMaterial({ color: 0x0077be, transparent: true, opacity: 0.7 })
+            );
+            pond.rotation.x = -Math.PI / 2;
+            
+            const shore = new THREE.Mesh(
+                new THREE.PlaneGeometry(width + 20, height + 20),
+                new THREE.MeshPhongMaterial({ color: 0xc2b280 })
+            );
+            shore.rotation.x = -Math.PI / 2;
+            shore.position.y = -0.05;
+            
+            pondGroup.add(shore);
+            pondGroup.add(pond);
+            
+            return pondGroup;
+        }
+
+        // Создание моста
+        function createBridge() {
+            const bridgeGroup = new THREE.Group();
+            
+            const bridgeDeck = new THREE.Mesh(
+                new THREE.BoxGeometry(20, 2, 50),
+                new THREE.MeshPhongMaterial({ color: 0x666666 })
+            );
+            bridgeDeck.position.set(400, 5, -200);
+            bridgeGroup.add(bridgeDeck);
+
+            // Опоры моста
+            for (let i = 0; i < 3; i++) {
+                const pillar = new THREE.Mesh(
+                    new THREE.CylinderGeometry(1, 1.5, 10, 8),
+                    new THREE.MeshPhongMaterial({ color: 0x888888 })
+                );
+                pillar.position.set(400, 0, -220 + i * 20);
+                bridgeGroup.add(pillar);
+            }
+
+            return bridgeGroup;
+        }
+
+        // Создание точной модели ЧАЭС
+        function createExactChernobylPlant() {
+            const plantGroup = new THREE.Group();
+            plantGroup.name = "Chernobyl_Plant_Exact";
+            
+            // Материалы
+            const buildingMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x888888,
+                transparent: true,
+                opacity: 0.6,
+                roughness: 0.8,
+                shininess: 20
+            });
+            
+            const reactorMaterial = new THREE.MeshPhongMaterial({
+                color: 0x333333,
+                transparent: true,
+                opacity: 0.7,
+                metalness: 0.4,
+                roughness: 0.5
+            });
+
+            // Энергоблоки
+            const unit1Group = createUnit1();
+            unit1Group.position.set(-240, 0, 0);
+            
+            const unit2Group = createUnit2();
+            unit2Group.position.set(-160, 0, 0);
+            
+            const unit3Group = createUnit3();
+            unit3Group.position.set(-80, 0, 0);
+            
+            const unit4Group = createUnit4();
+            unit4Group.position.set(0, 0, 0);
+            
+            // Мосты-переходы
+            const bridgeBetween1and2 = createBridgeBetweenUnits();
+            bridgeBetween1and2.position.set(-200, 0, 0);
+            
+            const bridgeBetween2and3 = createBridgeBetweenUnits();
+            bridgeBetween2and3.position.set(-120, 0, 0);
+            
+            const bridgeBetween3and4 = createBridgeBetweenUnits();
+            bridgeBetween3and4.position.set(-40, 0, 0);
+            
+            // Вентиляционные трубы с красными полосами
+            const tallVentStack = createTallVentStack();
+            tallVentStack.position.set(-280, 0, -40);
+            
+            const ventStackBetween3and4 = createVentStackBetweenUnits();
+            ventStackBetween3and4.position.set(-60, 0, -40);
+            
+            // Машинный зал с анимированным оборудованием
+            const machineHall = createLongMachineHall();
+            machineHall.position.set(-120, 0, -40);
+            
+            // 4-й энергоблок
+            const unit4MainGroup = new THREE.Group();
+            unit4MainGroup.name = "Unit_4_Main_Building";
+            
+            const reactorHall = createReactorHallExact(buildingMaterial);
+            reactorHall.position.y = 21;
+            
+            const reactorInterior = createReactorInterior(reactorMaterial);
+            reactorInterior.position.y = 5;
+            
+            const pipelines = createPipelines();
+            
+            const ventStack = createVentStackExact();
+            ventStack.position.set(-40, 63, -20);
+            
+            const deaeratorStack = createDeaeratorStack(buildingMaterial);
+            deaeratorStack.position.set(-30, 18, 30);
+            
+            const auxiliaryBuildings = createAuxiliaryBuildings(buildingMaterial);
+            
+            const coolingTowers = createHyperboloidCoolingTowers();
+            
+            const roadsAndLights = createRoadsAndLights();
+            
+            const windows = createWindowsWithLighting();
+            
+            const fireStation = createFireStation();
+            fireStation.position.set(-200, 0, -100);
+            
+            const busStop = createBusStop();
+            busStop.position.set(80, 0, -60);
+            
+            // Сборка
+            unit4MainGroup.add(reactorHall);
+            unit4MainGroup.add(reactorInterior);
+            unit4MainGroup.add(pipelines);
+            unit4MainGroup.add(ventStack);
+            unit4MainGroup.add(deaeratorStack);
+            unit4MainGroup.add(windows);
+            
+            plantGroup.add(unit1Group);
+            plantGroup.add(unit2Group);
+            plantGroup.add(bridgeBetween1and2);
+            plantGroup.add(bridgeBetween2and3);
+            plantGroup.add(unit3Group);
+            plantGroup.add(bridgeBetween3and4);
+            plantGroup.add(unit4Group);
+            plantGroup.add(unit4MainGroup);
+            plantGroup.add(tallVentStack);
+            plantGroup.add(ventStackBetween3and4);
+            plantGroup.add(machineHall);
+            plantGroup.add(auxiliaryBuildings);
+            plantGroup.add(coolingTowers);
+            plantGroup.add(roadsAndLights);
+            plantGroup.add(fireStation);
+            plantGroup.add(busStop);
+            
+            return plantGroup;
+        }
+
+        // Создание энергоблоков с окнами (6 окон в два ряда)
+        function createUnit1() {
+            const unitGroup = new THREE.Group();
+            const mainBuilding = new THREE.Mesh(
+                new THREE.BoxGeometry(72, 48, 72),
+                new THREE.MeshPhongMaterial({ color: 0x000000 })
+            );
+            mainBuilding.position.set(0, 24, 0);
+            
+            // Добавляем окна на 1-й энергоблок - по 6 окон в два ряда с каждой стороны
+            const windowMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x88ccff, 
+                transparent: true, 
+                opacity: 0.8 
+            });
+            
+            // Окна на фасаде (6 окон в два ряда)
+            for (let row = 0; row < 2; row++) {
+                for (let i = 0; i < 6; i++) {
+                    const window = new THREE.Mesh(
+                        new THREE.BoxGeometry(6, 6, 0.5),
+                        windowMaterial
+                    );
+                    window.position.set(
+                        -24 + i * 9.6,
+                        12 + row * 18,
+                        36.1
+                    );
+                    unitGroup.add(window);
+                }
+            }
+            
+            // Белые полосы со стороны пожарной части (южная сторона)
+            const stripeMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+            const stripe1 = new THREE.Mesh(new THREE.BoxGeometry(72, 2, 2), stripeMaterial);
+            stripe1.position.set(0, 15, 36);
+            const stripe2 = new THREE.Mesh(new THREE.BoxGeometry(72, 2, 2), stripeMaterial);
+            stripe2.position.set(0, 35, 36);
+            
+            unitGroup.add(mainBuilding);
+            unitGroup.add(stripe1);
+            unitGroup.add(stripe2);
+            return unitGroup;
+        }
+
+        function createUnit2() {
+            const unitGroup = new THREE.Group();
+            const mainBuilding = new THREE.Mesh(
+                new THREE.BoxGeometry(72, 48, 72),
+                new THREE.MeshPhongMaterial({ color: 0x000000 })
+            );
+            mainBuilding.position.set(0, 24, 0);
+            
+            // Добавляем окна на 2-й энергоблок - по 6 окон в два ряда с каждой стороны
+            const windowMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x88ccff, 
+                transparent: true, 
+                opacity: 0.8 
+            });
+            
+            // Окна на фасаде (6 окон в два ряда)
+            for (let row = 0; row < 2; row++) {
+                for (let i = 0; i < 6; i++) {
+                    const window = new THREE.Mesh(
+                        new THREE.BoxGeometry(6, 6, 0.5),
+                        windowMaterial
+                    );
+                    window.position.set(
+                        -24 + i * 9.6,
+                        12 + row * 18,
+                        36.1
+                    );
+                    unitGroup.add(window);
+                }
+            }
+            
+            // Белые полосы со стороны пожарной части (южная сторона)
+            const stripeMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+            const stripe1 = new THREE.Mesh(new THREE.BoxGeometry(72, 2, 2), stripeMaterial);
+            stripe1.position.set(0, 15, 36);
+            const stripe2 = new THREE.Mesh(new THREE.BoxGeometry(72, 2, 2), stripeMaterial);
+            stripe2.position.set(0, 35, 36);
+            
+            unitGroup.add(mainBuilding);
+            unitGroup.add(stripe1);
+            unitGroup.add(stripe2);
+            return unitGroup;
+        }
+
+        function createUnit3() {
+            const unitGroup = new THREE.Group();
+            const building = new THREE.Mesh(
+                new THREE.BoxGeometry(72, 42, 72),
+                new THREE.MeshPhongMaterial({ color: 0x666666 })
+            );
+            building.position.set(0, 21, 0);
+            
+            // Добавляем окна на 3-й энергоблок - по 6 окон в два ряда с каждой стороны
+            const windowMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x88ccff, 
+                transparent: true, 
+                opacity: 0.8 
+            });
+            
+            // Окна на фасаде (6 окон в два ряда)
+            for (let row = 0; row < 2; row++) {
+                for (let i = 0; i < 6; i++) {
+                    const window = new THREE.Mesh(
+                        new THREE.BoxGeometry(6, 6, 0.5),
+                        windowMaterial
+                    );
+                    window.position.set(
+                        -24 + i * 9.6,
+                        9 + row * 15,
+                        36.1
+                    );
+                    unitGroup.add(window);
+                }
+            }
+            
+            unitGroup.add(building);
+            return unitGroup;
+        }
+
+        function createUnit4() {
+            const unitGroup = new THREE.Group();
+            const building = new THREE.Mesh(
+                new THREE.BoxGeometry(72, 42, 72),
+                new THREE.MeshPhongMaterial({ color: 0x666666, transparent: true, opacity: 0.4 })
+            );
+            building.position.set(0, 21, 0);
+            
+            // Добавляем окна на 4-й энергоблок - по 6 окон в два ряда с каждой стороны
+            // УБРАНЫ ОКНА НА КРЫШЕ - остались только окна на стенах
+            const windowMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x88ccff, 
+                transparent: true, 
+                opacity: 0.8 
+            });
+            
+            // Окна на фасаде (6 окон в один ряд - убраны окна на крыше)
+            for (let i = 0; i < 6; i++) {
+                const window = new THREE.Mesh(
+                    new THREE.BoxGeometry(6, 6, 0.5),
+                    windowMaterial
+                );
+                window.position.set(
+                    -24 + i * 9.6,
+                    9,
+                    36.1
+                );
+                unitGroup.add(window);
+            }
+            
+            unitGroup.add(building);
+            return unitGroup;
+        }
+
+        // Создание разрушенного 4-го энергоблока с реалистичной дырой в крыше
+        function createDestroyedUnit4() {
+            const destroyedGroup = new THREE.Group();
+            
+            // Основание разрушенного здания
+            const base = new THREE.Mesh(
+                new THREE.BoxGeometry(72, 10, 72),
+                new THREE.MeshPhongMaterial({ color: 0x333333 })
+            );
+            base.position.y = 5;
+            destroyedGroup.add(base);
+            
+            // Обломки и разрушенные стены
+            for (let i = 0; i < 20; i++) {
+                const debris = new THREE.Mesh(
+                    new THREE.BoxGeometry(
+                        3 + Math.random() * 8,
+                        1 + Math.random() * 4,
+                        2 + Math.random() * 6
+                    ),
+                    new THREE.MeshPhongMaterial({ color: 0x666666 })
+                );
+                
+                debris.position.set(
+                    (Math.random() - 0.5) * 60,
+                    5 + Math.random() * 10,
+                    (Math.random() - 0.5) * 60
+                );
+                
+                debris.rotation.set(
+                    Math.random() * Math.PI,
+                    Math.random() * Math.PI,
+                    Math.random() * Math.PI
+                );
+                
+                destroyedGroup.add(debris);
+            }
+            
+            // Дыры в стенах
+            for (let i = 0; i < 12; i++) {
+                const hole = new THREE.Mesh(
+                    new THREE.BoxGeometry(6 + Math.random() * 4, 4 + Math.random() * 3, 0.5),
+                    new THREE.MeshPhongMaterial({ color: 0x000000 })
+                );
+                
+                // Случайное размещение дыр в стенах
+                const side = Math.floor(Math.random() * 4);
+                let x, y, z, rotation;
+                
+                switch(side) {
+                    case 0: // Фасад
+                        x = -30 + Math.random() * 60;
+                        y = 8 + Math.random() * 20;
+                        z = 36.1;
+                        rotation = 0;
+                        break;
+                    case 1: // Задняя сторона
+                        x = -30 + Math.random() * 60;
+                        y = 8 + Math.random() * 20;
+                        z = -36.1;
+                        rotation = 0;
+                        break;
+                    case 2: // Левая сторона
+                        x = -36.1;
+                        y = 8 + Math.random() * 20;
+                        z = -30 + Math.random() * 60;
+                        rotation = Math.PI / 2;
+                        break;
+                    case 3: // Правая сторона
+                        x = 36.1;
+                        y = 8 + Math.random() * 20;
+                        z = -30 + Math.random() * 60;
+                        rotation = Math.PI / 2;
+                        break;
+                }
+                
+                hole.position.set(x, y, z);
+                hole.rotation.y = rotation;
+                destroyedGroup.add(hole);
+            }
+            
+            // Реалистичная дыра в крыше - большая и неровная
+            const roofHoleGeometry = new THREE.BoxGeometry(35, 0.5, 35);
+            const roofHoleMaterial = new THREE.MeshPhongMaterial({ color: 0x000000 });
+            const roofHole = new THREE.Mesh(roofHoleGeometry, roofHoleMaterial);
+            roofHole.position.set(0, 21, 0);
+            
+            // Делаем дыру неровной
+            roofHole.scale.set(1, 1, 0.8);
+            roofHole.rotation.x = Math.PI / 8;
+            roofHole.rotation.z = Math.PI / 12;
+            
+            destroyedGroup.add(roofHole);
+            
+            // Обломки вокруг дыры
+            for (let i = 0; i < 8; i++) {
+                const edgeDebris = new THREE.Mesh(
+                    new THREE.BoxGeometry(2 + Math.random() * 4, 1 + Math.random() * 2, 2 + Math.random() * 3),
+                    new THREE.MeshPhongMaterial({ color: 0x555555 })
+                );
+                
+                const angle = (i / 8) * Math.PI * 2;
+                const radius = 18;
+                
+                edgeDebris.position.set(
+                    Math.cos(angle) * radius,
+                    21 + Math.random() * 3,
+                    Math.sin(angle) * radius * 0.8
+                );
+                
+                edgeDebris.rotation.set(
+                    Math.random() * Math.PI,
+                    Math.random() * Math.PI,
+                    Math.random() * Math.PI
+                );
+                
+                destroyedGroup.add(edgeDebris);
+            }
+            
+            return destroyedGroup;
+        }
+
+        function createBridgeBetweenUnits() {
+            const bridgeGroup = new THREE.Group();
+            const bridge = new THREE.Mesh(
+                new THREE.BoxGeometry(40, 8, 10),
+                new THREE.MeshPhongMaterial({ color: 0x444444 })
+            );
+            bridge.position.set(0, 28, 0);
+            bridgeGroup.add(bridge);
+            return bridgeGroup;
+        }
+
+        function createTallVentStack() {
+            const stackGroup = new THREE.Group();
+            const stack = new THREE.Mesh(
+                new THREE.CylinderGeometry(3, 4, 150, 32),
+                new THREE.MeshPhongMaterial({ color: 0xffffff })
+            );
+            stackGroup.add(stack);
+            
+            // Добавляем красные полосы
+            for (let i = 0; i < 6; i++) {
+                const stripe = new THREE.Mesh(
+                    new THREE.CylinderGeometry(3.1, 4.1, 5, 32),
+                    new THREE.MeshPhongMaterial({ color: 0xff0000 })
+                );
+                stripe.position.y = -60 + i * 25;
+                stackGroup.add(stripe);
+            }
+            
+            return stackGroup;
+        }
+
+        function createVentStackBetweenUnits() {
+            const stackGroup = new THREE.Group();
+            const stack = new THREE.Mesh(
+                new THREE.CylinderGeometry(1.5, 2, 40, 32),
+                new THREE.MeshPhongMaterial({ color: 0xffffff })
+            );
+            stackGroup.add(stack);
+            
+            // Добавляем красные полосы
+            for (let i = 0; i < 3; i++) {
+                const stripe = new THREE.Mesh(
+                    new THREE.CylinderGeometry(1.6, 2.1, 2, 32),
+                    new THREE.MeshPhongMaterial({ color: 0xff0000 })
+                );
+                stripe.position.y = -15 + i * 15;
+                stackGroup.add(stripe);
+            }
+            
+            return stackGroup;
+        }
+
+        function createLongMachineHall() {
+            const hallGroup = new THREE.Group();
+            const hall = new THREE.Mesh(
+                new THREE.BoxGeometry(320, 24, 30),
+                new THREE.MeshPhongMaterial({ color: 0x222222, transparent: true, opacity: 0.8 })
+            );
+            hall.position.set(0, 12, 0);
+            hallGroup.add(hall);
+            
+            // Добавляем анимированное оборудование в машинный зал
+            for (let i = 0; i < 8; i++) {
+                const equipment = createRealisticTurbine();
+                equipment.position.set(-140 + i * 40, 12, 0);
+                equipment.userData = {
+                    rotationSpeed: 0.01 + Math.random() * 0.02,
+                    oscillationSpeed: 0.02 + Math.random() * 0.03,
+                    originalY: 12,
+                    active: true
+                };
+                machineHallEquipment.push(equipment);
+                hallGroup.add(equipment);
+            }
+            
+            return hallGroup;
+        }
+
+        // Создание реалистичной турбины
+        function createRealisticTurbine() {
+            const turbineGroup = new THREE.Group();
+            
+            // Основание турбины
+            const base = new THREE.Mesh(
+                new THREE.BoxGeometry(12, 2, 8),
+                new THREE.MeshPhongMaterial({ color: 0x333333 })
+            );
+            base.position.y = 1;
+            turbineGroup.add(base);
+            
+            // Корпус турбины
+            const body = new THREE.Mesh(
+                new THREE.CylinderGeometry(3, 3, 6, 16),
+                new THREE.MeshPhongMaterial({ color: 0x3366cc })
+            );
+            body.position.y = 4;
+            turbineGroup.add(body);
+            
+            // Вращающийся ротор
+            const rotor = new THREE.Mesh(
+                new THREE.CylinderGeometry(2.5, 2.5, 5, 12),
+                new THREE.MeshPhongMaterial({ color: 0xffff00 })
+            );
+            rotor.position.y = 4;
+            rotor.userData = { rotationSpeed: 0.1 };
+            turbineGroup.add(rotor);
+            
+            // Подшипники
+            for (let i = 0; i < 2; i++) {
+                const bearing = new THREE.Mesh(
+                    new THREE.CylinderGeometry(1, 1, 1, 8),
+                    new THREE.MeshPhongMaterial({ color: 0x888888 })
+                );
+                bearing.position.set(0, 4, -2 + i * 4);
+                turbineGroup.add(bearing);
+            }
+            
+            return turbineGroup;
+        }
+
+        // Создание насоса
+        function createPump() {
+            const pumpGroup = new THREE.Group();
+            
+            // Основание насоса
+            const base = new THREE.Mesh(
+                new THREE.BoxGeometry(4, 1, 4),
+                new THREE.MeshPhongMaterial({ color: 0x444444 })
+            );
+            base.position.y = 0.5;
+            pumpGroup.add(base);
+            
+            // Корпус насоса
+            const body = new THREE.Mesh(
+                new THREE.CylinderGeometry(1.5, 1.5, 3, 12),
+                new THREE.MeshPhongMaterial({ color: 0x2266aa })
+            );
+            body.position.y = 2;
+            pumpGroup.add(body);
+            
+            // Электродвигатель
+            const motor = new THREE.Mesh(
+                new THREE.CylinderGeometry(1.2, 1.2, 2, 12),
+                new THREE.MeshPhongMaterial({ color: 0x666666 })
+            );
+            motor.position.set(0, 2, 2);
+            pumpGroup.add(motor);
+            
+            return pumpGroup;
+        }
+
+        // Создание парогенератора
+        function createSteamGenerator() {
+            const generatorGroup = new THREE.Group();
+            
+            // Основание
+            const base = new THREE.Mesh(
+                new THREE.BoxGeometry(6, 1, 6),
+                new THREE.MeshPhongMaterial({ color: 0x333333 })
+            );
+            base.position.y = 0.5;
+            generatorGroup.add(base);
+            
+            // Корпус парогенератора
+            const body = new THREE.Mesh(
+                new THREE.CylinderGeometry(2, 2, 8, 16),
+                new THREE.MeshPhongMaterial({ color: 0x4477cc })
+            );
+            body.position.y = 4;
+            generatorGroup.add(body);
+            
+            // Теплообменные трубы
+            for (let i = 0; i < 4; i++) {
+                const pipe = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.3, 0.3, 6, 8),
+                    new THREE.MeshPhongMaterial({ color: 0x888888 })
+                );
+                pipe.position.set(-1.5 + i, 4, 0);
+                pipe.rotation.z = Math.PI / 2;
+                generatorGroup.add(pipe);
+            }
+            
+            return generatorGroup;
+        }
+
+        function createReactorHallExact(material) {
+            const hallGroup = new THREE.Group();
+            const structure = new THREE.Mesh(new THREE.BoxGeometry(72, 42, 72), material);
+            hallGroup.add(structure);
+            
+            // Добавляем окна на реакторный зал - по 6 окон в один ряд с каждой стороны
+            // УБРАНЫ ОКНА НА КРЫШЕ
+            const windowMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x88ccff, 
+                transparent: true, 
+                opacity: 0.8 
+            });
+            
+            // Окна на фасаде (6 окон в один ряд - убраны окна на крыше)
+            for (let i = 0; i < 6; i++) {
+                const window = new THREE.Mesh(
+                    new THREE.BoxGeometry(6, 6, 0.5),
+                    windowMaterial
+                );
+                window.position.set(
+                    -24 + i * 9.6,
+                    9,
+                    36.1
+                );
+                hallGroup.add(window);
+            }
+            
+            return hallGroup;
+        }
+
+        function createReactorInterior(material) {
+            const interiorGroup = new THREE.Group();
+            
+            // Корпус реактора
+            const reactor = new THREE.Mesh(new THREE.CylinderGeometry(8, 10, 12, 16), material);
+            reactor.position.y = 6;
+            interiorGroup.add(reactor);
+            
+            // Создаем стержни управления внутри реактора
+            createReactorRods(interiorGroup);
+            
+            // УБРАН пар внутри реактора (убрана функция createReactorSteam)
+            
+            // Добавляем насосы и парогенераторы вокруг реактора
+            for (let i = 0; i < 4; i++) {
+                const angle = (i / 4) * Math.PI * 2;
+                const radius = 15;
+                
+                const pump = createPump();
+                pump.position.set(
+                    Math.cos(angle) * radius,
+                    1,
+                    Math.sin(angle) * radius
+                );
+                interiorGroup.add(pump);
+                
+                const generator = createSteamGenerator();
+                generator.position.set(
+                    Math.cos(angle + Math.PI/4) * (radius + 5),
+                    4,
+                    Math.sin(angle + Math.PI/4) * (radius + 5)
+                );
+                interiorGroup.add(generator);
+            }
+            
+            return interiorGroup;
+        }
+
+        // Создание стержней управления в реакторе
+        function createReactorRods(interiorGroup) {
+            for (let i = 0; i < 12; i++) {
+                const rod = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.2, 0.2, 8, 8),
+                    new THREE.MeshPhongMaterial({ color: 0x222222 })
+                );
+                
+                const angle = (i / 12) * Math.PI * 2;
+                const radius = 5;
+                
+                rod.position.set(
+                    Math.cos(angle) * radius,
+                    4,
+                    Math.sin(angle) * radius
+                );
+                
+                rod.userData = {
+                    type: 'control_rod',
+                    active: true
+                };
+                
+                reactorRods.push(rod);
+                interiorGroup.add(rod);
+            }
+        }
+
+        function createPipelines() {
+            const pipelineGroup = new THREE.Group();
+            return pipelineGroup;
+        }
+
+        function createVentStackExact() {
+            const stackGroup = new THREE.Group();
+            const stack = new THREE.Mesh(
+                new THREE.CylinderGeometry(2, 2.5, 50, 32),
+                new THREE.MeshPhongMaterial({ color: 0xffffff })
+            );
+            stackGroup.add(stack);
+            
+            // Добавляем красные полосы
+            for (let i = 0; i < 3; i++) {
+                const stripe = new THREE.Mesh(
+                    new THREE.CylinderGeometry(2.1, 2.6, 3, 32),
+                    new THREE.MeshPhongMaterial({ color: 0xff0000 })
+                );
+                stripe.position.y = -20 + i * 20;
+                stackGroup.add(stripe);
+            }
+            
+            return stackGroup;
+        }
+
+        function createDeaeratorStack(material) {
+            return new THREE.Mesh(new THREE.BoxGeometry(22, 36, 14), material);
+        }
+
+        function createAuxiliaryBuildings(material) {
+            const auxGroup = new THREE.Group();
+            const building = new THREE.Mesh(new THREE.BoxGeometry(40, 12, 25), material);
+            building.position.set(10, 6, -35);
+            
+            // Добавляем окна на вспомогательные здания
+            const windowMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x88ccff, 
+                transparent: true, 
+                opacity: 0.8 
+            });
+            
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 2; j++) {
+                    const window = new THREE.Mesh(
+                        new THREE.BoxGeometry(2, 3, 0.1),
+                        windowMaterial
+                    );
+                    window.position.set(
+                        10 - 15 + i * 10,
+                        3 + j * 5,
+                        -35 + 12.6
+                    );
+                    auxGroup.add(window);
+                }
+            }
+            
+            auxGroup.add(building);
+            return auxGroup;
+        }
+
+        function createHyperboloidCoolingTowers() {
+            const towersGroup = new THREE.Group();
+            for (let i = 0; i < 2; i++) {
+                const points = [];
+                const height = 80;
+                for (let j = 0; j <= 30; j++) {
+                    const t = j / 30;
+                    const y = (t - 0.5) * height;
+                    const radius = 20 + Math.pow(Math.sin(t * Math.PI), 2) * 15;
+                    points.push(new THREE.Vector2(radius, y));
+                }
+                const geometry = new THREE.LatheGeometry(points, 32);
+                const material = new THREE.MeshPhongMaterial({ color: 0xffffff });
+                const tower = new THREE.Mesh(geometry, material);
+                tower.position.set(100 + i * 80, 40, 80);
+                
+                // УБРАН пар из градирен АЭС
+                
+                towersGroup.add(tower);
+            }
+            return towersGroup;
+        }
+
+        function createWindowsWithLighting() {
+            const windowsGroup = new THREE.Group();
+            
+            // Добавляем окна на все здания станции с подсветкой
+            const windowMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xffffaa, 
+                transparent: true, 
+                opacity: 0.8,
+                emissive: 0xffffaa,
+                emissiveIntensity: 0.3
+            });
+            
+            // Окна на энергоблоках
+            for (let unit = 1; unit <= 4; unit++) {
+                // Только один ряд окон (убраны окна на крыше)
+                for (let i = 0; i < 6; i++) {
+                    for (let side = 0; side < 4; side++) {
+                        let x, y, z, rotation;
+                        
+                        switch(side) {
+                            case 0: // Фасад
+                                x = -240 + (unit-1)*80 + (-24 + i * 9.6);
+                                y = 9;
+                                z = 36.1;
+                                rotation = 0;
+                                break;
+                            case 1: // Задняя сторона
+                                x = -240 + (unit-1)*80 + (-24 + i * 9.6);
+                                y = 9;
+                                z = -36.1;
+                                rotation = 0;
+                                break;
+                            case 2: // Левая сторона
+                                x = -240 + (unit-1)*80 - 36.1;
+                                y = 9;
+                                z = -24 + i * 9.6;
+                                rotation = Math.PI / 2;
+                                break;
+                            case 3: // Правая сторона
+                                x = -240 + (unit-1)*80 + 36.1;
+                                y = 9;
+                                z = -24 + i * 9.6;
+                                rotation = Math.PI / 2;
+                                break;
+                        }
+                        
+                        const window = new THREE.Mesh(
+                            new THREE.BoxGeometry(6, 6, 0.1),
+                            windowMaterial
+                        );
+                        window.position.set(x, y, z);
+                        window.rotation.y = rotation;
+                        buildingLights.push(window);
+                        windowsGroup.add(window);
+                    }
+                }
+            }
+            
+            return windowsGroup;
+        }
+
+        function createRoadsAndLights() {
+            const roadsGroup = new THREE.Group();
+            const roadMaterial = new THREE.MeshPhongMaterial({ color: 0x222222 });
+            
+            const fireTruckRoad = new THREE.Mesh(new THREE.BoxGeometry(250, 0.2, 8), roadMaterial);
+            fireTruckRoad.position.set(-100, 0.1, -50);
+            fireTruckRoad.rotation.y = Math.PI / 2;
+            roadsGroup.add(fireTruckRoad);
+            
+            // Добавляем фонари вокруг станции
+            const lightPositions = [
+                {x: -150, z: -80}, {x: -100, z: -80}, {x: -50, z: -80}, {x: 0, z: -80}, {x: 50, z: -80}, {x: 100, z: -80}, {x: 150, z: -80},
+                {x: -150, z: 80}, {x: -100, z: 80}, {x: -50, z: 80}, {x: 0, z: 80}, {x: 50, z: 80}, {x: 100, z: 80}, {x: 150, z: 80},
+                {x: -180, z: -50}, {x: -180, z: 0}, {x: -180, z: 50},
+                {x: 180, z: -50}, {x: 180, z: 0}, {x: 180, z: 50}
+            ];
+            
+            lightPositions.forEach(pos => {
+                const light = createStreetLight();
+                light.position.set(pos.x, 0, pos.z);
+                streetLights.push(light);
+                roadsGroup.add(light);
+            });
+            
+            return roadsGroup;
+        }
+
+        function createFireStation() {
+            const stationGroup = new THREE.Group();
+            const building = new THREE.Mesh(new THREE.BoxGeometry(30, 10, 20), new THREE.MeshPhongMaterial({ color: 0xff0000 }));
+            building.position.y = 5;
+            stationGroup.add(building);
+            
+            // Добавляем гараж для пожарных машин
+            const garage = new THREE.Mesh(new THREE.BoxGeometry(25, 8, 15), new THREE.MeshPhongMaterial({ color: 0xcc0000 }));
+            garage.position.set(0, 4, -8);
+            stationGroup.add(garage);
+            
+            return stationGroup;
+        }
+
+        function createBusStop() {
+            const stopGroup = new THREE.Group();
+            const roof = new THREE.Mesh(new THREE.BoxGeometry(8, 0.5, 4), new THREE.MeshPhongMaterial({ color: 0x3366cc }));
+            roof.position.set(0, 3, 0);
+            stopGroup.add(roof);
+            
+            // Добавляем знак автобусной остановки
+            const sign = new THREE.Mesh(
+                new THREE.BoxGeometry(0.5, 3, 2),
+                new THREE.MeshPhongMaterial({ color: 0xffff00 })
+            );
+            sign.position.set(0, 1.5, 0);
+            stopGroup.add(sign);
+            
+            return stopGroup;
+        }
+
+        // Создание города с полной инфраструктурой
+        function createCity() {
+            const cityGroup = new THREE.Group();
+            cityGroup.position.set(200, 0, -300);
+            
+            // Дороги города
+            const roadsGroup = createCityRoads();
+            cityGroup.add(roadsGroup);
+
+            // Городские здания
+            const buildingsGroup = createCityBuildings();
+            cityGroup.add(buildingsGroup);
+
+            // Деревья
+            const treesGroup = createCityTrees();
+            cityGroup.add(treesGroup);
+
+            // Фонари
+            const lightsGroup = createCityLights();
+            cityGroup.add(lightsGroup);
+
+            // Добавляем людей и транспорт в город
+            const cityPeopleAndVehicles = createCityPeopleAndVehicles();
+            cityGroup.add(cityPeopleAndVehicles);
+
+            // Эвакуационная остановка в городе
+            const evacuationStop = createEvacuationStop();
+            evacuationStop.position.set(120, 0, -280);
+            cityGroup.add(evacuationStop);
+
+            return cityGroup;
+        }
+
+        function createCityRoads() {
+            const roadsGroup = new THREE.Group();
+            const roadMaterial = new THREE.MeshPhongMaterial({ color: 0x222222 });
+            const sidewalkMaterial = new THREE.MeshPhongMaterial({ color: 0x888888 });
+
+            // Главные дороги
+            const mainRoad1 = new THREE.Mesh(new THREE.BoxGeometry(500, 0.2, 20), roadMaterial);
+            mainRoad1.position.set(200, 0.1, -300);
+            roadsGroup.add(mainRoad1);
+
+            const mainRoad2 = new THREE.Mesh(new THREE.BoxGeometry(20, 0.2, 500), roadMaterial);
+            mainRoad2.position.set(200, 0.1, -300);
+            roadsGroup.add(mainRoad2);
+
+            // Тротуары вдоль главных дорог
+            for (let i = 0; i < 4; i++) {
+                const sidewalk = new THREE.Mesh(new THREE.BoxGeometry(500, 0.2, 2), sidewalkMaterial);
+                let x, z;
+                
+                if (i === 0) {
+                    x = 200;
+                    z = -295;
+                } else if (i === 1) {
+                    x = 200;
+                    z = -305;
+                } else if (i === 2) {
+                    x = 195;
+                    z = -300;
+                    sidewalk.rotation.y = Math.PI / 2;
+                } else {
+                    x = 205;
+                    z = -300;
+                    sidewalk.rotation.y = Math.PI / 2;
+                }
+                
+                sidewalk.position.set(x, 0.1, z);
+                roadsGroup.add(sidewalk);
+            }
+
+            // Перекрестки с тротуарами
+            const crosswalks = [
+                {x: 120, z: -300, width: 8, height: 2},
+                {x: 160, z: -300, width: 8, height: 2},
+                {x: 200, z: -340, width: 2, height: 8},
+                {x: 200, z: -280, width: 2, height: 8},
+                {x: 240, z: -300, width: 8, height: 2},
+                {x: 280, z: -300, width: 8, height: 2}
+            ];
+
+            crosswalks.forEach(crosswalk => {
+                const crosswalkMesh = new THREE.Mesh(
+                    new THREE.BoxGeometry(crosswalk.width, 0.2, crosswalk.height),
+                    new THREE.MeshPhongMaterial({ color: 0xffffff })
+                );
+                crosswalkMesh.position.set(crosswalk.x, 0.11, crosswalk.z);
+                roadsGroup.add(crosswalkMesh);
+            });
+
+            return roadsGroup;
+        }
+
+        function createCityBuildings() {
+            const buildingsGroup = new THREE.Group();
+            
+            const buildingPositions = [
+                // Первый район - центр города
+                {x: 120, z: -320, w: 15, h: 25, d: 12},
+                {x: 140, z: -320, w: 12, h: 30, d: 10},
+                {x: 160, z: -320, w: 18, h: 35, d: 14},
+                {x: 180, z: -320, w: 14, h: 28, d: 11},
+                {x: 200, z: -320, w: 16, h: 40, d: 13},
+                {x: 220, z: -320, w: 13, h: 32, d: 12},
+                {x: 240, z: -320, w: 17, h: 38, d: 15},
+                {x: 260, z: -320, w: 15, h: 34, d: 13},
+                {x: 280, z: -320, w: 14, h: 29, d: 11},
+                
+                // Второй район - южная часть
+                {x: 120, z: -340, w: 16, h: 27, d: 12},
+                {x: 140, z: -340, w: 13, h: 31, d: 11},
+                {x: 160, z: -340, w: 15, h: 36, d: 13},
+                {x: 180, z: -340, w: 17, h: 33, d: 14},
+                {x: 200, z: -340, w: 14, h: 39, d: 12},
+                {x: 220, z: -340, w: 16, h: 30, d: 13},
+                {x: 240, z: -340, w: 18, h: 37, d: 15},
+                {x: 260, z: -340, w: 15, h: 32, d: 12},
+                {x: 280, z: -340, w: 13, h: 28, d: 11},
+                
+                // Третий район - северная часть
+                {x: 120, z: -360, w: 14, h: 26, d: 12},
+                {x: 140, z: -360, w: 16, h: 33, d: 13},
+                {x: 160, z: -360, w: 17, h: 37, d: 14},
+                {x: 180, z: -360, w: 15, h: 31, d: 12},
+                {x: 200, z: -360, w: 18, h: 41, d: 15},
+                {x: 220, z: -360, w: 14, h: 29, d: 11},
+                {x: 240, z: -360, w: 16, h: 35, d: 13},
+                {x: 260, z: -360, w: 13, h: 30, d: 12},
+                {x: 280, z: -360, w: 15, h: 34, d: 13},
+                
+                // Четвертый район - восточная часть
+                {x: 300, z: -320, w: 16, h: 32, d: 12},
+                {x: 320, z: -320, w: 14, h: 28, d: 11},
+                {x: 340, z: -320, w: 18, h: 36, d: 14},
+                {x: 300, z: -340, w: 15, h: 31, d: 12},
+                {x: 320, z: -340, w: 17, h: 35, d: 13},
+                {x: 340, z: -340, w: 13, h: 29, d: 11},
+                {x: 300, z: -360, w: 16, h: 33, d: 12},
+                {x: 320, z: -360, w: 14, h: 30, d: 11},
+                {x: 340, z: -360, w: 18, h: 38, d: 14},
+                
+                // Пятый район - западная часть
+                {x: 80, z: -320, w: 15, h: 27, d: 12},
+                {x: 60, z: -320, w: 13, h: 31, d: 11},
+                {x: 40, z: -320, w: 17, h: 35, d: 13},
+                {x: 80, z: -340, w: 14, h: 29, d: 12},
+                {x: 60, z: -340, w: 16, h: 33, d: 11},
+                {x: 40, z: -340, w: 12, h: 28, d: 13},
+                {x: 80, z: -360, w: 15, h: 32, d: 12},
+                {x: 60, z: -360, w: 13, h: 30, d: 11},
+                {x: 40, z: -360, w: 17, h: 36, d: 13},
+            ];
+
+            buildingPositions.forEach(pos => {
+                const building = new THREE.Mesh(
+                    new THREE.BoxGeometry(pos.w, pos.h, pos.d),
+                    new THREE.MeshPhongMaterial({ color: 0xffffff })
+                );
+                building.position.set(pos.x, pos.h/2, pos.z);
+                buildingsGroup.add(building);
+
+                // Добавляем окны с подсветкой
+                const windowMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x88ccff, 
+                    transparent: true, 
+                    opacity: 0.8 
+                });
+                
+                for (let i = 0; i < 4; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        const window = new THREE.Mesh(
+                            new THREE.BoxGeometry(1.5, 2, 0.1),
+                            windowMaterial
+                        );
+                        window.position.set(
+                            pos.x - pos.w/3 + i * (pos.w/3),
+                            5 + j * 8,
+                            pos.z + pos.d/2 + 0.1
+                        );
+                        buildingLights.push(window);
+                        buildingsGroup.add(window);
+                    }
+                }
+            });
+
+            return buildingsGroup;
+        }
+
+        function createCityTrees() {
+            const treesGroup = new THREE.Group();
+            
+            const treePositions = [
+                // Центральные районы
+                {x: 115, z: -315}, {x: 135, z: -315}, {x: 155, z: -315}, {x: 175, z: -315},
+                {x: 195, z: -315}, {x: 215, z: -315}, {x: 235, z: -315}, {x: 255, z: -315},
+                {x: 275, z: -315}, {x: 285, z: -315},
+                {x: 115, z: -325}, {x: 135, z: -325}, {x: 155, z: -325}, {x: 175, z: -325},
+                {x: 195, z: -325}, {x: 215, z: -325}, {x: 235, z: -325}, {x: 255, z: -325},
+                {x: 275, z: -325}, {x: 285, z: -325},
+                {x: 115, z: -335}, {x: 135, z: -335}, {x: 155, z: -335}, {x: 175, z: -335},
+                {x: 195, z: -335}, {x: 215, z: -335}, {x: 235, z: -335}, {x: 255, z: -335},
+                {x: 275, z: -335}, {x: 285, z: -335},
+                {x: 115, z: -345}, {x: 135, z: -345}, {x: 155, z: -345}, {x: 175, z: -345},
+                {x: 195, z: -345}, {x: 215, z: -345}, {x: 235, z: -345}, {x: 255, z: -345},
+                {x: 275, z: -345}, {x: 285, z: -345},
+                {x: 115, z: -355}, {x: 135, z: -355}, {x: 155, z: -355}, {x: 175, z: -355},
+                {x: 195, z: -355}, {x: 215, z: -355}, {x: 235, z: -355}, {x: 255, z: -355},
+                {x: 275, z: -355}, {x: 285, z: -355},
+                {x: 115, z: -365}, {x: 135, z: -365}, {x: 155, z: -365}, {x: 175, z: -365},
+                {x: 195, z: -365}, {x: 215, z: -365}, {x: 235, z: -365}, {x: 255, z: -365},
+                {x: 275, z: -365}, {x: 285, z: -365},
+                
+                // Восточные районы
+                {x: 305, z: -315}, {x: 325, z: -315}, {x: 345, z: -315},
+                {x: 305, z: -325}, {x: 325, z: -325}, {x: 345, z: -325},
+                {x: 305, z: -335}, {x: 325, z: -335}, {x: 345, z: -335},
+                {x: 305, z: -345}, {x: 325, z: -345}, {x: 345, z: -345},
+                {x: 305, z: -355}, {x: 325, z: -355}, {x: 345, z: -355},
+                {x: 305, z: -365}, {x: 325, z: -365}, {x: 345, z: -365},
+                
+                // Западные районы
+                {x: 75, z: -315}, {x: 55, z: -315}, {x: 35, z: -315},
+                {x: 75, z: -325}, {x: 55, z: -325}, {x: 35, z: -325},
+                {x: 75, z: -335}, {x: 55, z: -335}, {x: 35, z: -335},
+                {x: 75, z: -345}, {x: 55, z: -345}, {x: 35, z: -345},
+                {x: 75, z: -355}, {x: 55, z: -355}, {x: 35, z: -355},
+                {x: 75, z: -365}, {x: 55, z: -365}, {x: 35, z: -365},
+            ];
+
+            treePositions.forEach(pos => {
+                const tree = createTree();
+                tree.position.set(pos.x, 0, pos.z);
+                treesGroup.add(tree);
+            });
+
+            return treesGroup;
+        }
+
+        function createCityLights() {
+            const lightsGroup = new THREE.Group();
+            
+            // УПРОЩЕННАЯ СЕТЬ ФОНАРЕЙ - только вдоль главных дорог
+            for (let i = 0; i < 16; i++) {
+                const light = createStreetLight();
+                light.position.set(120 + i * 15, 0, -295);
+                streetLights.push(light);
+                lightsGroup.add(light);
+                
+                const light2 = createStreetLight();
+                light2.position.set(120 + i * 15, 0, -305);
+                streetLights.push(light2);
+                lightsGroup.add(light2);
+            }
+
+            return lightsGroup;
+        }
+
+        // Создание людей и транспорта в городе
+        function createCityPeopleAndVehicles() {
+            const group = new THREE.Group();
+            
+            // Люди в городе
+            for (let i = 0; i < 40; i++) {
+                const person = createPerson();
+                person.position.set(
+                    40 + Math.random() * 320,
+                    0.5,
+                    -320 + Math.random() * 80
+                );
+                person.userData = {
+                    type: 'city_person',
+                    direction: new THREE.Vector3((Math.random() - 0.5) * 0.01, 0, (Math.random() - 0.5) * 0.01),
+                    timer: 0,
+                    evacuating: false
+                };
+                cityPeople.push(person);
+                group.add(person);
+            }
+
+            // Транспорт в городе
+            for (let i = 0; i < 15; i++) {
+                const vehicle = createCar();
+                vehicle.position.set(
+                    40 + Math.random() * 320,
+                    0.5,
+                    -300 + (Math.random() - 0.5) * 20
+                );
+                vehicle.userData = {
+                    type: 'city_vehicle',
+                    direction: new THREE.Vector3(0.02, 0, 0),
+                    timer: 0
+                };
+                cityVehicles.push(vehicle);
+                group.add(vehicle);
+            }
+
+            return group;
+        }
+
+        // Создание автомобиля
+        function createCar() {
+            const carGroup = new THREE.Group();
+            
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(4, 1.5, 2),
+                new THREE.MeshPhongMaterial({ color: Math.random() * 0xffffff })
+            );
+            body.position.y = 0.75;
+            carGroup.add(body);
+            
+            const cabin = new THREE.Mesh(
+                new THREE.BoxGeometry(2, 1, 2),
+                new THREE.MeshPhongMaterial({ color: 0x333333 })
+            );
+            cabin.position.set(-0.5, 1.25, 0);
+            carGroup.add(cabin);
+            
+            // Колеса
+            for (let i = 0; i < 4; i++) {
+                const wheel = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.3, 0.3, 0.2, 8),
+                    new THREE.MeshPhongMaterial({ color: 0x222222 })
+                );
+                wheel.rotation.z = Math.PI / 2;
+                const x = i % 2 === 0 ? -1.2 : 1.2;
+                const z = i < 2 ? -0.8 : 0.8;
+                wheel.position.set(x, 0.3, z);
+                carGroup.add(wheel);
+            }
+            
+            return carGroup;
+        }
+
+        // Создание эвакуационной остановки в городе
+        function createEvacuationStop() {
+            const stopGroup = new THREE.Group();
+            
+            // Большая крыша
+            const roof = new THREE.Mesh(
+                new THREE.BoxGeometry(20, 0.5, 10),
+                new THREE.MeshPhongMaterial({ color: 0x3366cc })
+            );
+            roof.position.set(0, 4, 0);
+            stopGroup.add(roof);
+            
+            // Опоры для крыши
+            for (let i = 0; i < 4; i++) {
+                const pillar = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.3, 0.3, 4, 8),
+                    new THREE.MeshPhongMaterial({ color: 0x666666 })
+                );
+                const x = i % 2 === 0 ? -8 : 8;
+                const z = i < 2 ? -4 : 4;
+                pillar.position.set(x, 2, z);
+                stopGroup.add(pillar);
+            }
+            
+            // Большой знак остановки
+            const sign = new THREE.Mesh(
+                new THREE.BoxGeometry(1, 4, 3),
+                new THREE.MeshPhongMaterial({ color: 0xffff00 })
+            );
+            sign.position.set(0, 2, 0);
+            stopGroup.add(sign);
+            
+            // Надпись на знаке
+            const signText = new THREE.Mesh(
+                new THREE.BoxGeometry(0.8, 2, 0.1),
+                new THREE.MeshPhongMaterial({ color: 0xff0000 })
+            );
+            signText.position.set(0, 2, 1.6);
+            stopGroup.add(signText);
+            
+            // Скамейки
+            for (let i = 0; i < 2; i++) {
+                const bench = new THREE.Mesh(
+                    new THREE.BoxGeometry(6, 0.5, 1),
+                    new THREE.MeshPhongMaterial({ color: 0x8B4513 })
+                );
+                bench.position.set(0, 0.25, -2 + i * 4);
+                stopGroup.add(bench);
+            }
+            
+            return stopGroup;
+        }
+
+        function createStreetLight() {
+            const lightGroup = new THREE.Group();
+            
+            const pole = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.1, 0.1, 8, 8),
+                new THREE.MeshPhongMaterial({ color: 0x666666 })
+            );
+            
+            const lamp = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 8, 8),
+                new THREE.MeshPhongMaterial({ color: 0xffffaa })
+            );
+            lamp.position.y = 4;
+            
+            lightGroup.add(pole);
+            lightGroup.add(lamp);
+            
+            return lightGroup;
+        }
+
+        // Создание поселения с полной инфраструктурой
+        function createSettlement() {
+            const settlementGroup = new THREE.Group();
+            settlementGroup.position.set(600, 0, -300);
+            
+            // Дороги поселения
+            const roadsGroup = createSettlementRoads();
+            settlementGroup.add(roadsGroup);
+
+            // Жилые дома с окнами
+            const housesGroup = createSettlementHouses();
+            settlementGroup.add(housesGroup);
+
+            // Деревья в поселении
+            const treesGroup = createSettlementTrees();
+            settlementGroup.add(treesGroup);
+
+            // ТЭЦ
+            const powerPlant = createPowerPlant();
+            powerPlant.position.set(0, 0, 50);
+            settlementGroup.add(powerPlant);
+
+            // Водоём в поселении (соединен с рекой)
+            const settlementPond = createPond(60, 40);
+            settlementPond.position.set(50, 0.1, 80);
+            settlementGroup.add(settlementPond);
+
+            // Канал соединяющий водоём с рекой
+            const canal2 = new THREE.Mesh(
+                new THREE.PlaneGeometry(100, 6),
+                new THREE.MeshPhongMaterial({ color: 0x0066cc, transparent: true, opacity: 0.8 })
+            );
+            canal2.rotation.x = -Math.PI / 2;
+            canal2.rotation.z = -Math.PI / 6;
+            canal2.position.set(80, 0.1, 120);
+            settlementGroup.add(canal2);
+
+            // Фонари в поселении
+            const settlementLights = createSettlementLights();
+            settlementGroup.add(settlementLights);
+
+            // Остановка для эвакуационных автобусов
+            const evacuationBusStop = createEvacuationBusStop();
+            evacuationBusStop.position.set(80, 0, -50);
+            settlementGroup.add(evacuationBusStop);
+
+            // Люди в поселении
+            const settlementPeopleGroup = createSettlementPeopleAndVehicles();
+            settlementGroup.add(settlementPeopleGroup);
+
+            return settlementGroup;
+        }
+
+        function createSettlementRoads() {
+            const roadsGroup = new THREE.Group();
+            const roadMaterial = new THREE.MeshPhongMaterial({ color: 0x222222 });
+
+            // Главная дорога через поселение
+            const mainRoad = new THREE.Mesh(new THREE.BoxGeometry(200, 0.2, 8), roadMaterial);
+            mainRoad.position.set(0, 0.1, 0);
+            roadsGroup.add(mainRoad);
+
+            // Поперечные дороги
+            for (let i = 0; i < 3; i++) {
+                const crossRoad = new THREE.Mesh(new THREE.BoxGeometry(8, 0.2, 100), roadMaterial);
+                crossRoad.position.set(-60 + i * 60, 0.1, 0);
+                roadsGroup.add(crossRoad);
+            }
+
+            return roadsGroup;
+        }
+
+        function createSettlementHouses() {
+            const housesGroup = new THREE.Group();
+            
+            for (let i = 0; i < 15; i++) {
+                const house = new THREE.Mesh(
+                    new THREE.BoxGeometry(10, 15, 8),
+                    new THREE.MeshPhongMaterial({ color: 0xf0f0f0 })
+                );
+                house.position.set(
+                    -60 + (i % 5) * 30,
+                    7.5,
+                    -60 + Math.floor(i / 5) * 30
+                );
+                housesGroup.add(house);
+
+                // Крыша
+                const roof = new THREE.Mesh(
+                    new THREE.ConeGeometry(8, 4, 4),
+                    new THREE.MeshPhongMaterial({ color: 0x8B4513 })
+                );
+                roof.position.set(
+                    -60 + (i % 5) * 30,
+                    17,
+                    -60 + Math.floor(i / 5) * 30
+                );
+                housesGroup.add(roof);
+
+                // Окна в домах с подсветкой
+                const windowMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xffffaa, 
+                    transparent: true, 
+                    opacity: 0.8,
+                    emissive: 0xffffaa,
+                    emissiveIntensity: 0.3
+                });
+
+                for (let j = 0; j < 2; j++) {
+                    for (let k = 0; k < 2; k++) {
+                        const window = new THREE.Mesh(
+                            new THREE.BoxGeometry(1, 1.2, 0.1),
+                            windowMaterial
+                        );
+                        window.position.set(
+                            -60 + (i % 5) * 30 - 2 + k * 4,
+                            5 + j * 6,
+                            -60 + Math.floor(i / 5) * 30 + 4.1
+                        );
+                        buildingLights.push(window);
+                        housesGroup.add(window);
+                    }
+                }
+            }
+
+            return housesGroup;
+        }
+
+        function createSettlementTrees() {
+            const treesGroup = new THREE.Group();
+            
+            const treePositions = [
+                {x: -70, z: -70}, {x: -40, z: -70}, {x: -10, z: -70}, {x: 20, z: -70}, {x: 50, z: -70},
+                {x: -70, z: -40}, {x: 50, z: -40}, {x: -70, z: -10}, {x: 50, z: -10},
+                {x: -70, z: 20}, {x: 50, z: 20}, {x: -70, z: 50}, {x: -40, z: 50}, {x: -10, z: 50}, {x: 20, z: 50}, {x: 50, z: 50}
+            ];
+
+            treePositions.forEach(pos => {
+                const tree = createTree();
+                tree.position.set(pos.x, 0, pos.z);
+                treesGroup.add(tree);
+            });
+
+            return treesGroup;
+        }
+
+        function createPowerPlant() {
+            const plantGroup = new THREE.Group();
+            
+            const mainBuilding = new THREE.Mesh(
+                new THREE.BoxGeometry(40, 25, 30),
+                new THREE.MeshPhongMaterial({ color: 0x888888 })
+            );
+            mainBuilding.position.y = 12.5;
+            plantGroup.add(mainBuilding);
+
+            // Добавляем окна на ТЭЦ
+            const windowMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xffffaa, 
+                transparent: true, 
+                opacity: 0.8,
+                emissive: 0xffffaa,
+                emissiveIntensity: 0.3
+            });
+            
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 3; j++) {
+                    const window = new THREE.Mesh(
+                        new THREE.BoxGeometry(2, 3, 0.1),
+                        windowMaterial
+                    );
+                    window.position.set(
+                        -15 + i * 10,
+                        5 + j * 6,
+                        15.1
+                    );
+                    buildingLights.push(window);
+                    plantGroup.add(window);
+                }
+            }
+
+            // Труба ТЭЦ
+            const chimney = new THREE.Mesh(
+                new THREE.CylinderGeometry(2, 2.5, 80, 16),
+                new THREE.MeshPhongMaterial({ color: 0xffffff })
+            );
+            chimney.position.set(15, 40, 0);
+            plantGroup.add(chimney);
+
+            // Красные полосы на трубе
+            for (let i = 0; i < 4; i++) {
+                const stripe = new THREE.Mesh(
+                    new THREE.CylinderGeometry(2.1, 2.6, 3, 16),
+                    new THREE.MeshPhongMaterial({ color: 0xff0000 })
+                );
+                stripe.position.set(15, -20 + i * 20, 0);
+                plantGroup.add(stripe);
+            }
+
+            // Градирни
+            for (let i = 0; i < 2; i++) {
+                const coolingTower = new THREE.Mesh(
+                    new THREE.CylinderGeometry(12, 15, 50, 24),
+                    new THREE.MeshPhongMaterial({ color: 0xffffff })
+                );
+                coolingTower.position.set(-20 + i * 40, 25, 20);
+                plantGroup.add(coolingTower);
+                
+                // УБРАН пар из градирен ТЭЦ в поселении
+            }
+
+            return plantGroup;
+        }
+
+        // Создание остановки для эвакуационных автобусов
+        function createEvacuationBusStop() {
+            const stopGroup = new THREE.Group();
+            
+            // Большая крыша
+            const roof = new THREE.Mesh(
+                new THREE.BoxGeometry(15, 0.5, 8),
+                new THREE.MeshPhongMaterial({ color: 0x3366cc })
+            );
+            roof.position.set(0, 4, 0);
+            stopGroup.add(roof);
+            
+            // Опоры для крыши
+            for (let i = 0; i < 4; i++) {
+                const pillar = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.3, 0.3, 4, 8),
+                    new THREE.MeshPhongMaterial({ color: 0x666666 })
+                );
+                const x = i % 2 === 0 ? -6 : 6;
+                const z = i < 2 ? -3 : 3;
+                pillar.position.set(x, 2, z);
+                stopGroup.add(pillar);
+            }
+            
+            // Большой знак остановки
+            const sign = new THREE.Mesh(
+                new THREE.BoxGeometry(1, 4, 3),
+                new THREE.MeshPhongMaterial({ color: 0xffff00 })
+            );
+            sign.position.set(0, 2, 0);
+            stopGroup.add(sign);
+            
+            // Надпись на знаке
+            const signText = new THREE.Mesh(
+                new THREE.BoxGeometry(0.8, 2, 0.1),
+                new THREE.MeshPhongMaterial({ color: 0xff0000 })
+            );
+            signText.position.set(0, 2, 1.6);
+            stopGroup.add(signText);
+            
+            return stopGroup;
+        }
+
+        function createSettlementLights() {
+            const lightsGroup = new THREE.Group();
+            
+            // Увеличил количество фонарей в поселении
+            const lightPositions = [
+                {x: -70, z: -70}, {x: -40, z: -70}, {x: -10, z: -70}, {x: 20, z: -70}, {x: 50, z: -70},
+                {x: -70, z: -40}, {x: -40, z: -40}, {x: -10, z: -40}, {x: 20, z: -40}, {x: 50, z: -40},
+                {x: -70, z: -10}, {x: -40, z: -10}, {x: -10, z: -10}, {x: 20, z: -10}, {x: 50, z: -10},
+                {x: -70, z: 20}, {x: -40, z: 20}, {x: -10, z: 20}, {x: 20, z: 20}, {x: 50, z: 20},
+                {x: -70, z: 50}, {x: -40, z: 50}, {x: -10, z: 50}, {x: 20, z: 50}, {x: 50, z: 50},
+                {x: -60, z: -60}, {x: -30, z: -60}, {x: 0, z: -60}, {x: 30, z: -60}, {x: 60, z: -60},
+                {x: -60, z: -30}, {x: 60, z: -30}, {x: -60, z: 0}, {x: 60, z: 0}, {x: -60, z: 30}, {x: 60, z: 30}
+            ];
+            
+            lightPositions.forEach(pos => {
+                const light = createStreetLight();
+                light.position.set(pos.x, 0, pos.z);
+                streetLights.push(light);
+                lightsGroup.add(light);
+            });
+
+            return lightsGroup;
+        }
+
+        // Создание людей в поселении
+        function createSettlementPeopleAndVehicles() {
+            const group = new THREE.Group();
+            
+            // Люди в поселении
+            for (let i = 0; i < 15; i++) {
+                const person = createPerson();
+                person.position.set(
+                    -50 + Math.random() * 100,
+                    0.5,
+                    -50 + Math.random() * 100
+                );
+                person.userData = {
+                    type: 'person',
+                    direction: new THREE.Vector3((Math.random() - 0.5) * 0.01, 0, (Math.random() - 0.5) * 0.01),
+                    timer: 0,
+                    evacuating: false
+                };
+                settlementPeople.push(person);
+                group.add(person);
+            }
+
+            return group;
+        }
+
+        // Вспомогательные функции
+        function createTree() {
+            const treeGroup = new THREE.Group();
+            
+            const trunk = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.3, 0.5, 4, 8),
+                new THREE.MeshPhongMaterial({ color: 0x8B4513 })
+            );
+            trunk.position.y = 2;
+            
+            const crown = new THREE.Mesh(
+                new THREE.SphereGeometry(2, 8, 6),
+                new THREE.MeshPhongMaterial({ color: 0x228B22 })
+            );
+            crown.position.y = 5;
+            
+            treeGroup.add(trunk);
+            treeGroup.add(crown);
+            
+            return treeGroup;
+        }
+
+        function createPerson() {
+            const personGroup = new THREE.Group();
+            
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(0.4, 1.5, 0.2),
+                new THREE.MeshPhongMaterial({ color: 0x3366ff })
+            );
+            body.position.y = 0.75;
+            personGroup.add(body);
+            
+            const head = new THREE.Mesh(
+                new THREE.SphereGeometry(0.15, 8, 8),
+                new THREE.MeshPhongMaterial({ color: 0xffddaa })
+            );
+            head.position.y = 1.5;
+            personGroup.add(head);
+            
+            return personGroup;
+        }
+
+        function createFireTruck() {
+            const truckGroup = new THREE.Group();
+            
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(8, 3, 3),
+                new THREE.MeshPhongMaterial({ color: 0xff0000 })
+            );
+            body.position.y = 1.5;
+            truckGroup.add(body);
+            
+            const cabin = new THREE.Mesh(
+                new THREE.BoxGeometry(4, 2.5, 3),
+                new THREE.MeshPhongMaterial({ color: 0xff0000 })
+            );
+            cabin.position.set(-2, 2.25, 0);
+            truckGroup.add(cabin);
+            
+            // Лестница
+            const ladder = new THREE.Mesh(
+                new THREE.BoxGeometry(0.3, 6, 2),
+                new THREE.MeshPhongMaterial({ color: 0x666666 })
+            );
+            ladder.position.set(3, 4, 0);
+            truckGroup.add(ladder);
+            
+            return truckGroup;
+        }
+
+        function createEvacuationBus() {
+            const busGroup = new THREE.Group();
+            
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(10, 3, 3),
+                new THREE.MeshPhongMaterial({ color: 0xffff00 })
+            );
+            body.position.y = 1.5;
+            busGroup.add(body);
+            
+            return busGroup;
+        }
+
+        // Создание эффектов взрыва
+        function createExplosionEffects() {
+            // Взрыв - огненный шар
+            const explosionGroup = new THREE.Group();
+            explosionGroup.position.set(0, 25, 0);
+            
+            const explosionGeometry = new THREE.SphereGeometry(2, 16, 16);
+            const explosionMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xff4500, 
+                transparent: true, 
+                opacity: 0.9 
+            });
+            const explosion = new THREE.Mesh(explosionGeometry, explosionMaterial);
+            explosionGroup.add(explosion);
+            
+            explosionEffects.push(explosionGroup);
+            scene.add(explosionGroup);
+            
+            // Огонь
+            for (let i = 0; i < 30; i++) {
+                const fireGeometry = new THREE.SphereGeometry(0.2 + Math.random() * 0.8, 8, 8);
+                const fireMaterial = new THREE.MeshBasicMaterial({ 
+                    color: new THREE.Color().setHSL(0.1 - Math.random() * 0.1, 1, 0.5), 
+                    transparent: true, 
+                    opacity: 0.8 
+                });
+                const fire = new THREE.Mesh(fireGeometry, fireMaterial);
+                
+                fire.position.set(
+                    (Math.random() - 0.5) * 15,
+                    20 + Math.random() * 10,
+                    (Math.random() - 0.5) * 15
+                );
+                
+                fire.userData = {
+                    speed: 0.05 + Math.random() * 0.05,
+                    flickerSpeed: 0.1 + Math.random() * 0.1,
+                    life: 1.0
+                };
+                
+                fireEffects.push(fire);
+                scene.add(fire);
+            }
+            
+            // ДОБАВЛЕНО: Черный дым после взрыва
+            createBlackSmoke();
+            
+            // Осколки
+            for (let i = 0; i < 50; i++) {
+                const debrisGeometry = new THREE.BoxGeometry(
+                    0.5 + Math.random() * 2,
+                    0.5 + Math.random() * 2,
+                    0.5 + Math.random() * 2
+                );
+                const debrisMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x888888 
+                });
+                const debris = new THREE.Mesh(debrisGeometry, debrisMaterial);
+                
+                debris.position.set(0, 25, 0);
+                
+                debris.userData = {
+                    velocity: new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.5,
+                        Math.random() * 0.8,
+                        (Math.random() - 0.5) * 0.5
+                    ),
+                    rotationSpeed: new THREE.Vector3(
+                        Math.random() * 0.1,
+                        Math.random() * 0.1,
+                        Math.random() * 0.1
+                    ),
+                    life: 3.0
+                };
+                
+                debrisParticles.push(debris);
+                scene.add(debris);
+            }
+            
+            // Создаем радиоактивное облако над городом
+            createRadioactiveCloud();
+            
+            // Запускаем землетрясение
+            startEarthquake();
+            
+            // Разрушаем 4-й энергоблок
+            destroyUnit4();
+            
+            // Останавливаем все процессы
+            stopAllProcesses();
+            
+            // Вызываем пожарных
+            callFirefighters();
+            
+            // Запускаем эвакуацию
+            startEvacuation();
+        }
+
+        // ДОБАВЛЕНО: Создание черного дыма после взрыва
+        function createBlackSmoke() {
+            for (let i = 0; i < 60; i++) {
+                const smokeGeometry = new THREE.SphereGeometry(0.5 + Math.random() * 1.5, 8, 8);
+                const smokeMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0x111111,
+                    transparent: true, 
+                    opacity: 0.6 
+                });
+                const smoke = new THREE.Mesh(smokeGeometry, smokeMaterial);
+                
+                smoke.position.set(
+                    (Math.random() - 0.5) * 20,
+                    25 + Math.random() * 10,
+                    (Math.random() - 0.5) * 20
+                );
+                
+                smoke.userData = {
+                    speed: 0.03 + Math.random() * 0.02,
+                    drift: new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.01,
+                        0.02 + Math.random() * 0.01,
+                        (Math.random() - 0.5) * 0.01
+                    ),
+                    scaleSpeed: 0.005 + Math.random() * 0.003,
+                    life: 1.0
+                };
+                
+                blackSmokeParticles.push(smoke);
+                scene.add(smoke);
+            }
+        }
+
+        // Вызов пожарных
+        function callFirefighters() {
+            // Создаем пожарные машины, которые выезжают из пожарной части
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const fireTruck = createFireTruck();
+                    fireTruck.position.set(-200, 0.5, -100);
+                    fireTruck.userData = {
+                        type: 'fire_truck',
+                        speed: 0.15,
+                        targetPosition: new THREE.Vector3(-50 + i * 20, 0.5, -50), // Останавливаются снаружи станции
+                        arrived: false
+                    };
+                    emergencyVehicles.push(fireTruck);
+                    scene.add(fireTruck);
+                }, i * 1000); // Машины выезжают с интервалом
+            }
+        }
+
+        // Создание радиоактивного облака
+        function createRadioactiveCloud() {
+            const cloudGroup = new THREE.Group();
+            
+            for (let i = 0; i < 40; i++) {
+                const cloudGeometry = new THREE.SphereGeometry(1.5 + Math.random() * 2.5, 8, 8);
+                const cloudMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0xffff00,
+                    transparent: true, 
+                    opacity: 0.4 
+                });
+                const cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
+                
+                cloud.position.set(
+                    180 + (Math.random() - 0.5) * 60,
+                    60 + Math.random() * 40,
+                    -300 + (Math.random() - 0.5) * 60
+                );
+                
+                cloud.userData = {
+                    speed: 0.008 + Math.random() * 0.005,
+                    scaleSpeed: 0.001 + Math.random() * 0.001,
+                    drift: new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.01,
+                        0.005 + Math.random() * 0.005,
+                        (Math.random() - 0.5) * 0.01
+                    )
+                };
+                
+                cloudGroup.add(cloud);
+            }
+            
+            radioactiveCloud = cloudGroup;
+            scene.add(cloudGroup);
+        }
+
+        // Запуск землетрясения
+        function startEarthquake() {
+            controls.earthquakeActive = true;
+            
+            // Сохраняем исходные позиции всех объектов
+            const originalPositions = [];
+            
+            scene.traverse(object => {
+                if (object.isMesh && object.position.y > 0) {
+                    originalPositions.push({
+                        object: object,
+                        position: object.position.clone(),
+                        rotation: object.rotation.clone()
+                    });
+                }
+            });
+            
+            // Анимация землетрясения
+            let earthquakeTime = 0;
+            const earthquakeDuration = 3000; // 3 секунды
+            
+            function animateEarthquake() {
+                if (earthquakeTime < earthquakeDuration) {
+                    const intensity = 0.5 * (1 - earthquakeTime / earthquakeDuration);
+                    
+                    originalPositions.forEach(item => {
+                        item.object.position.x = item.position.x + (Math.random() - 0.5) * intensity;
+                        item.object.position.y = item.position.y + (Math.random() - 0.5) * intensity;
+                        item.object.position.z = item.position.z + (Math.random() - 0.5) * intensity;
+                        
+                        item.object.rotation.x = item.rotation.x + (Math.random() - 0.5) * intensity * 0.1;
+                        item.object.rotation.y = item.rotation.y + (Math.random() - 0.5) * intensity * 0.1;
+                        item.object.rotation.z = item.rotation.z + (Math.random() - 0.5) * intensity * 0.1;
+                    });
+                    
+                    earthquakeTime += 16;
+                    requestAnimationFrame(animateEarthquake);
+                } else {
+                    // Возвращаем объекты в исходное положение
+                    originalPositions.forEach(item => {
+                        item.object.position.copy(item.position);
+                        item.object.rotation.copy(item.rotation);
+                    });
+                    
+                    controls.earthquakeActive = false;
+                }
+            }
+            
+            animateEarthquake();
+        }
+
+        // Разрушение 4-го энергоблока
+        function destroyUnit4() {
+            unit4Destroyed = true;
+            
+            // Находим и удаляем 4-й энергоблок
+            scene.traverse(object => {
+                if (object.name === "Unit_4_Main_Building" || 
+                    (object.parent && object.parent.name === "Unit_4_Main_Building")) {
+                    scene.remove(object);
+                }
+            });
+            
+            // Уничтожаем стержни управления
+            reactorRods.forEach(rod => {
+                scene.remove(rod);
+            });
+            reactorRods = [];
+            
+            // Останавливаем пар в реакторе
+            steamParticles.forEach(steam => {
+                steam.userData.active = false;
+            });
+            
+            // Добавляем разрушенный энергоблок
+            destroyedUnit4 = createDestroyedUnit4();
+            destroyedUnit4.position.set(0, 0, 0);
+            scene.add(destroyedUnit4);
+        }
+
+        // Остановка всех процессов
+        function stopAllProcesses() {
+            controls.processesStopped = true;
+            
+            // Останавливаем оборудование в машинном зале
+            machineHallEquipment.forEach(equipment => {
+                equipment.userData.active = false;
+            });
+            
+            // Останавливаем дым из ТЭЦ
+            tecSmokeParticles.forEach(smoke => {
+                smoke.userData.active = false;
+            });
+            
+            // Останавливаем пар из градирен
+            coolingTowerSteam.forEach(steam => {
+                steam.userData.active = false;
+            });
+            
+            // Выключаем свет на станции
+            stationLightsOn = false;
+            updateStationLights();
+        }
+
+        // Запуск эвакуации
+        function startEvacuation() {
+            evacuationStarted = true;
+            
+            // Эвакуация людей со станции
+            stationPeople.forEach(person => {
+                person.userData.evacuating = true;
+                person.userData.direction.set(0.05, 0, -0.05); // Движение к автобусам
+            });
+            
+            // Эвакуация людей из города
+            cityPeople.forEach(person => {
+                person.userData.evacuating = true;
+                // Движение к эвакуационной остановке в городе
+                const directionToStop = new THREE.Vector3(120, 0, -280).sub(person.position).normalize();
+                person.userData.direction = directionToStop.multiplyScalar(0.02);
+            });
+            
+            // Создаем автобусы для эвакуации
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const bus = createEvacuationBus();
+                    bus.position.set(80 + i * 25, 0.5, -60); // Останавливаются на остановке
+                    bus.userData = {
+                        type: 'evacuation_bus',
+                        speed: 0.08,
+                        evacuating: false,
+                        peopleLoaded: 0,
+                        targetPosition: new THREE.Vector3(680, 0.5, -350) // Остановка в поселении
+                    };
+                    emergencyVehicles.push(bus);
+                    scene.add(bus);
+                }, i * 2000);
+            }
+            
+            updateStatus("🚌 НАЧАТА ЭВАКУАЦИЯ", "critical");
+        }
+
+        // Обновление освещения на станции
+        function updateStationLights() {
+            buildingLights.forEach(light => {
+                // Проверяем, находится ли свет на станции (координаты около 0,0)
+                if (Math.abs(light.position.x) < 200 && Math.abs(light.position.z) < 200) {
+                    if (stationLightsOn) {
+                        light.material.color.set(0xffffaa);
+                        light.material.emissive.set(0xffffaa);
+                        light.material.emissiveIntensity = 0.3;
+                    } else {
+                        light.material.color.set(0x333333);
+                        light.material.emissive.set(0x000000);
+                        light.material.emissiveIntensity = 0;
+                    }
+                }
+            });
+        }
+
+        // Создание людей на станции
+        function createStationPeople() {
+            const group = new THREE.Group();
+            
+            // Люди на станции (рабочие, инженеры)
+            for (let i = 0; i < 12; i++) {
+                const person = createPerson();
+                person.position.set(
+                    -100 + Math.random() * 200,
+                    0.5,
+                    -80 + Math.random() * 160
+                );
+                person.userData = {
+                    type: 'station_person',
+                    direction: new THREE.Vector3((Math.random() - 0.5) * 0.015, 0, (Math.random() - 0.5) * 0.015),
+                    timer: 0,
+                    evacuating: false
+                };
+                stationPeople.push(person);
+                group.add(person);
+            }
+
+            return group;
+        }
+
+        // Анимация людей и транспорта
+        function animatePeopleAndVehicles() {
+            // Анимация городских людей
+            cityPeople.forEach(person => {
+                if (person.userData.evacuating) {
+                    person.position.add(person.userData.direction);
+                    
+                    // Если человек достиг эвакуационной остановки, удаляем его
+                    if (person.position.distanceTo(new THREE.Vector3(120, 0, -280)) < 5) {
+                        scene.remove(person);
+                        cityPeople = cityPeople.filter(p => p !== person);
+                    }
+                } else {
+                    person.userData.timer += 0.1;
+                    person.position.add(person.userData.direction);
+                    
+                    if (person.userData.timer > 40) {
+                        person.userData.direction.set(
+                            (Math.random() - 0.5) * 0.01,
+                            0,
+                            (Math.random() - 0.5) * 0.01
+                        );
+                        person.userData.timer = 0;
+                    }
+                    
+                    if (person.position.x < 40 || person.position.x > 360 || 
+                        person.position.z < -320 || person.position.z > -280) {
+                        person.position.set(
+                            40 + Math.random() * 320,
+                            0.5,
+                            -320 + Math.random() * 40
+                        );
+                    }
+                }
+            });
+
+            // Анимация городского транспорта
+            cityVehicles.forEach(vehicle => {
+                vehicle.position.add(vehicle.userData.direction);
+                
+                if (vehicle.position.x > 360) {
+                    vehicle.position.x = 40;
+                }
+                
+                vehicle.userData.timer += 0.1;
+                if (vehicle.userData.timer > 100) {
+                    vehicle.userData.direction.x = -vehicle.userData.direction.x;
+                    vehicle.userData.timer = 0;
+                }
+            });
+
+            // Анимация людей в поселении
+            settlementPeople.forEach(person => {
+                if (person.userData.evacuating) {
+                    person.position.add(person.userData.direction);
+                    
+                    // Если человек вышел за пределы поселения, удаляем его
+                    if (person.position.x > 100) {
+                        scene.remove(person);
+                        settlementPeople = settlementPeople.filter(p => p !== person);
+                    }
+                } else {
+                    person.userData.timer += 0.1;
+                    person.position.add(person.userData.direction);
+                    
+                    if (person.userData.timer > 40) {
+                        person.userData.direction.set(
+                            (Math.random() - 0.5) * 0.01,
+                            0,
+                            (Math.random() - 0.5) * 0.01
+                        );
+                        person.userData.timer = 0;
+                    }
+                    
+                    if (person.position.x < -70 || person.position.x > 70 || 
+                        person.position.z < -70 || person.position.z > 70) {
+                        person.position.set(
+                            -50 + Math.random() * 100,
+                            0.5,
+                            -50 + Math.random() * 100
+                        );
+                    }
+                }
+            });
+
+            // Анимация людей на станции
+            stationPeople.forEach(person => {
+                if (person.userData.evacuating) {
+                    person.position.add(person.userData.direction);
+                    
+                    // Если человек достиг автобусов, удаляем его
+                    if (person.position.z < -70) {
+                        scene.remove(person);
+                        stationPeople = stationPeople.filter(p => p !== person);
+                    }
+                } else {
+                    person.userData.timer += 0.1;
+                    person.position.add(person.userData.direction);
+                    
+                    if (person.userData.timer > 25) {
+                        person.userData.direction.set(
+                            (Math.random() - 0.5) * 0.015,
+                            0,
+                            (Math.random() - 0.5) * 0.015
+                        );
+                        person.userData.timer = 0;
+                    }
+                    
+                    if (person.position.x < -120 || person.position.x > 120 || 
+                        person.position.z < -100 || person.position.z > 100) {
+                        person.position.set(
+                            -100 + Math.random() * 200,
+                            0.5,
+                            -80 + Math.random() * 160
+                        );
+                    }
+                }
+            });
+
+            // Анимация аварийной техники
+            emergencyVehicles.forEach(vehicle => {
+                if (vehicle.userData.type === 'fire_truck') {
+                    if (!vehicle.userData.arrived) {
+                        const direction = new THREE.Vector3()
+                            .subVectors(vehicle.userData.targetPosition, vehicle.position)
+                            .normalize()
+                            .multiplyScalar(vehicle.userData.speed);
+                        
+                        vehicle.position.add(direction);
+                        
+                        // Если пожарная машина достигла цели
+                        if (vehicle.position.distanceTo(vehicle.userData.targetPosition) < 5) {
+                            vehicle.userData.arrived = true;
+                            vehicle.userData.speed = 0;
+                        }
+                    }
+                } else if (vehicle.userData.type === 'evacuation_bus') {
+                    if (!vehicle.userData.evacuating) {
+                        // Автобусы ждут людей на остановке
+                        if (vehicle.position.x < 150) {
+                            vehicle.position.x += vehicle.userData.speed * 0.5;
+                        }
+                        
+                        // Загрузка людей в автобусы
+                        if (stationPeople.length > 0 && vehicle.userData.peopleLoaded < 8) {
+                            const nearbyPeople = stationPeople.filter(person => 
+                                person.position.distanceTo(vehicle.position) < 10
+                            );
+                            
+                            if (nearbyPeople.length > 0) {
+                                const person = nearbyPeople[0];
+                                scene.remove(person);
+                                stationPeople = stationPeople.filter(p => p !== person);
+                                vehicle.userData.peopleLoaded++;
+                            }
+                        }
+                        
+                        // Если автобус заполнен или прошло время, уезжает в поселение
+                        if (vehicle.userData.peopleLoaded >= 8 || stationPeople.length === 0) {
+                            vehicle.userData.evacuating = true;
+                        }
+                    } else {
+                        // Движение автобуса в поселение
+                        const direction = new THREE.Vector3()
+                            .subVectors(vehicle.userData.targetPosition, vehicle.position)
+                            .normalize()
+                            .multiplyScalar(vehicle.userData.speed * 2);
+                        
+                        vehicle.position.add(direction);
+                        
+                        // Если автобус достиг остановки в поселении
+                        if (vehicle.position.distanceTo(vehicle.userData.targetPosition) < 10) {
+                            // Высаживаем людей в поселении
+                            for (let i = 0; i < vehicle.userData.peopleLoaded; i++) {
+                                const person = createPerson();
+                                person.position.set(
+                                    vehicle.position.x + (Math.random() - 0.5) * 10,
+                                    0.5,
+                                    vehicle.position.z + (Math.random() - 0.5) * 10
+                                );
+                                person.userData = {
+                                    type: 'person',
+                                    direction: new THREE.Vector3((Math.random() - 0.5) * 0.01, 0, (Math.random() - 0.5) * 0.01),
+                                    timer: 0,
+                                    evacuating: false
+                                };
+                                settlementPeople.push(person);
+                                scene.add(person);
+                            }
+                            
+                            vehicle.userData.peopleLoaded = 0;
+                            vehicle.userData.evacuating = false;
+                            
+                            // Возвращаем автобус за новыми людьми
+                            vehicle.userData.targetPosition = new THREE.Vector3(80, 0.5, -60);
+                        }
+                    }
+                }
+            });
+
+            // Анимация оборудования в машинном зале (только если процессы не остановлены)
+            machineHallEquipment.forEach(equipment => {
+                if (equipment.userData.active) {
+                    equipment.rotation.y += equipment.userData.rotationSpeed;
+                    equipment.position.y = equipment.userData.originalY + Math.sin(Date.now() * equipment.userData.oscillationSpeed) * 0.5;
+                    
+                    // Анимация ротора турбины
+                    equipment.traverse(child => {
+                        if (child.userData && child.userData.rotationSpeed) {
+                            child.rotation.y += child.userData.rotationSpeed;
+                        }
+                    });
+                }
+            });
+
+            // Анимация эффектов взрыва
+            if (controls.explosionStarted) {
+                // Анимация взрыва
+                explosionEffects.forEach(explosion => {
+                    explosion.scale.x += 0.1;
+                    explosion.scale.y += 0.1;
+                    explosion.scale.z += 0.1;
+                    
+                    if (explosion.scale.x > 5) {
+                        explosion.scale.set(1, 1, 1);
+                    }
+                });
+                
+                // Анимация огня
+                fireEffects.forEach(fire => {
+                    fire.position.y += fire.userData.speed;
+                    fire.scale.x = 1 + Math.sin(Date.now() * fire.userData.flickerSpeed) * 0.3;
+                    fire.scale.y = 1 + Math.sin(Date.now() * fire.userData.flickerSpeed) * 0.3;
+                    fire.scale.z = 1 + Math.sin(Date.now() * fire.userData.flickerSpeed) * 0.3;
+                    
+                    fire.userData.life -= 0.01;
+                    fire.material.opacity = fire.userData.life * 0.8;
+                    
+                    if (fire.position.y > 40 || fire.userData.life <= 0) {
+                        fire.position.y = 20;
+                        fire.userData.life = 1.0;
+                    }
+                });
+                
+                // Анимация черного дыма
+                blackSmokeParticles.forEach(smoke => {
+                    smoke.position.add(smoke.userData.drift);
+                    smoke.position.y += smoke.userData.speed;
+                    
+                    smoke.scale.x += smoke.userData.scaleSpeed;
+                    smoke.scale.y += smoke.userData.scaleSpeed;
+                    smoke.scale.z += smoke.userData.scaleSpeed;
+                    
+                    smoke.userData.life -= 0.005;
+                    smoke.material.opacity = smoke.userData.life * 0.6;
+                    
+                    if (smoke.position.y > 80 || smoke.userData.life <= 0) {
+                        smoke.position.set(
+                            (Math.random() - 0.5) * 20,
+                            25 + Math.random() * 10,
+                            (Math.random() - 0.5) * 20
+                        );
+                        smoke.scale.set(1, 1, 1);
+                        smoke.userData.life = 1.0;
+                    }
+                });
+                
+                // Анимация осколков
+                debrisParticles.forEach(debris => {
+                    debris.position.add(debris.userData.velocity);
+                    debris.rotation.x += debris.userData.rotationSpeed.x;
+                    debris.rotation.y += debris.userData.rotationSpeed.y;
+                    debris.rotation.z += debris.userData.rotationSpeed.z;
+                    
+                    debris.userData.velocity.y -= 0.01; // Гравитация
+                    debris.userData.life -= 0.01;
+                    
+                    if (debris.position.y < 0 || debris.userData.life <= 0) {
+                        scene.remove(debris);
+                        debrisParticles = debrisParticles.filter(d => d !== debris);
+                    }
+                });
+                
+                // Анимация радиоактивного облака
+                if (radioactiveCloud) {
+                    radioactiveCloud.position.y += 0.01;
+                    radioactiveCloud.children.forEach(cloud => {
+                        cloud.position.add(cloud.userData.drift);
+                        cloud.scale.x += cloud.userData.scaleSpeed;
+                        cloud.scale.y += cloud.userData.scaleSpeed;
+                        cloud.scale.z += cloud.userData.scaleSpeed;
+                        
+                        if (cloud.position.y > 150) {
+                            cloud.position.y = 60;
+                            cloud.scale.set(1, 1, 1);
+                        }
+                    });
+                }
+            }
+        }
+
+        // Система освещения
+        function setupLighting() {
+            if (sunLight) scene.remove(sunLight);
+            if (ambientLight) scene.remove(ambientLight);
+
+            if (isDayMode) {
+                ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+                scene.add(ambientLight);
+                
+                sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
+                sunLight.position.set(200, 300, 200);
+                sunLight.castShadow = true;
+                scene.add(sunLight);
+                
+                scene.background = new THREE.Color(0x87CEEB);
+                
+                // Включаем все огни в дневном режиме
+                toggleLights(true);
+            } else {
+                ambientLight = new THREE.AmbientLight(0x444466, 0.3);
+                scene.add(ambientLight);
+                
+                sunLight = new THREE.DirectionalLight(0x5566aa, 0.4);
+                sunLight.position.set(-150, 200, -150);
+                scene.add(sunLight);
+                
+                scene.background = new THREE.Color(0x1a237e);
+                
+                // Включаем/выключаем огни в зависимости от состояния
+                toggleLights(controls.lightsOn);
+            }
+        }
+
+        // Функция включения/выключения освещения
+        function toggleLights(on) {
+            controls.lightsOn = on;
+            
+            // Управляем уличными фонарями
+            streetLights.forEach(light => {
+                const lamp = light.children[1];
+                if (lamp) {
+                    lamp.material.color.set(on ? 0xffffaa : 0x333333);
+                    lamp.material.emissive.set(on ? 0xffffaa : 0x000000);
+                }
+            });
+            
+            // Управляем освещением в окнах (кроме станции)
+            buildingLights.forEach(light => {
+                // Проверяем, не находится ли свет на станции
+                if (Math.abs(light.position.x) > 200 || Math.abs(light.position.z) > 200) {
+                    light.material.color.set(on ? 0xffffaa : 0x333333);
+                    light.material.emissive.set(on ? 0xffffaa : 0x000000);
+                }
+            });
+        }
+
+        // Система управления камерой
+        class CameraControls {
+            constructor(camera) {
+                this.camera = camera;
+                this.target = new THREE.Vector3(0, 20, 0);
+                this.distance = 150;
+                this.phi = Math.PI / 3;
+                this.theta = Math.PI / 4;
+                
+                this.isMouseDown = false;
+                this.mouseX = 0;
+                this.mouseY = 0;
+                this.lastMouseX = 0;
+                this.lastMouseY = 0;
+                
+                this.isTouchDown = false;
+                this.lastTouchX = 0;
+                this.lastTouchY = 0;
+                
+                this.init();
+            }
+            
+            init() {
+                renderer.domElement.addEventListener('mousedown', this.onMouseDown.bind(this));
+                renderer.domElement.addEventListener('mousemove', this.onMouseMove.bind(this));
+                renderer.domElement.addEventListener('mouseup', this.onMouseUp.bind(this));
+                renderer.domElement.addEventListener('wheel', this.onWheel.bind(this));
+                
+                // Добавляем обработчики для сенсорных устройств
+                renderer.domElement.addEventListener('touchstart', this.onTouchStart.bind(this));
+                renderer.domElement.addEventListener('touchmove', this.onTouchMove.bind(this));
+                renderer.domElement.addEventListener('touchend', this.onTouchEnd.bind(this));
+                
+                this.updateCamera();
+            }
+            
+            onMouseDown(event) {
+                this.isMouseDown = true;
+                this.lastMouseX = event.clientX;
+                this.lastMouseY = event.clientY;
+            }
+            
+            onMouseMove(event) {
+                if (!this.isMouseDown) return;
+                
+                this.mouseX = event.clientX;
+                this.mouseY = event.clientY;
+                
+                const deltaX = this.mouseX - this.lastMouseX;
+                const deltaY = this.mouseY - this.lastMouseY;
+                
+                this.theta -= deltaX * 0.01;
+                this.phi -= deltaY * 0.01;
+                this.phi = Math.max(0.1, Math.min(Math.PI - 0.1, this.phi));
+                
+                this.lastMouseX = this.mouseX;
+                this.lastMouseY = this.mouseY;
+                
+                this.updateCamera();
+            }
+            
+            onMouseUp() {
+                this.isMouseDown = false;
+            }
+            
+            onWheel(event) {
+                this.distance += event.deltaY * 0.01;
+                this.distance = Math.max(30, Math.min(300, this.distance));
+                this.updateCamera();
+            }
+            
+            onTouchStart(event) {
+                if (event.touches.length === 1) {
+                    this.isTouchDown = true;
+                    this.lastTouchX = event.touches[0].clientX;
+                    this.lastTouchY = event.touches[0].clientY;
+                    event.preventDefault();
+                }
+            }
+            
+            onTouchMove(event) {
+                if (!this.isTouchDown || event.touches.length !== 1) return;
+                
+                const touchX = event.touches[0].clientX;
+                const touchY = event.touches[0].clientY;
+                
+                const deltaX = touchX - this.lastTouchX;
+                const deltaY = touchY - this.lastTouchY;
+                
+                this.theta -= deltaX * 0.01;
+                this.phi -= deltaY * 0.01;
+                this.phi = Math.max(0.1, Math.min(Math.PI - 0.1, this.phi));
+                
+                this.lastTouchX = touchX;
+                this.lastTouchY = touchY;
+                
+                this.updateCamera();
+                event.preventDefault();
+            }
+            
+            onTouchEnd() {
+                this.isTouchDown = false;
+            }
+            
+            updateCamera() {
+                const x = this.distance * Math.sin(this.phi) * Math.cos(this.theta);
+                const y = this.distance * Math.cos(this.phi);
+                const z = this.distance * Math.sin(this.phi) * Math.sin(this.theta);
+                
+                this.camera.position.set(
+                    this.target.x + x,
+                    this.target.y + y,
+                    this.target.z + z
+                );
+                this.camera.lookAt(this.target);
+            }
+            
+            resetCamera() {
+                if (currentLocation === 'station') {
+                    this.target.set(0, 20, 0);
+                    this.distance = 150;
+                } else if (currentLocation === 'city') {
+                    this.target.set(200, 30, -300);
+                    this.distance = 250;
+                } else if (currentLocation === 'settlement') {
+                    this.target.set(600, 30, -300);
+                    this.distance = 200;
+                } else if (currentLocation === 'bridge') {
+                    this.target.set(400, 15, -200);
+                    this.distance = 100;
+                }
+                this.phi = Math.PI / 3;
+                this.theta = Math.PI / 4;
+                this.updateCamera();
+            }
+        }
+
+        // Функции управления реактором
+        function updatePower(value) {
+            reactorState.power = parseInt(value);
+            document.getElementById('powerValue').textContent = reactorState.power;
+            updateReactivity();
+        }
+
+        function updateRods(value) {
+            reactorState.controlRods = parseInt(value);
+            document.getElementById('rodsValue').textContent = reactorState.controlRods;
+            updateReactivity();
+        }
+
+        function updateReactivity() {
+            // Расчет реактивности на основе мощности и количества стержней
+            const powerFactor = reactorState.power / 1000;
+            const rodsFactor = (211 - reactorState.controlRods) / 211;
+            
+            // Реактивность растет при низком количестве стержней и высокой мощности
+            reactorState.reactivity = (powerFactor * rodsFactor * 4).toFixed(2);
+            
+            document.getElementById('reactivityValue').textContent = reactorState.reactivity;
+            
+            const warningElement = document.getElementById('reactivityWarning');
+            
+            if (reactorState.reactivity > 3.0) {
+                warningElement.textContent = "КРИТИЧЕСКАЯ РЕАКТИВНОСТЬ! ОПАСНОСТЬ ВЗРЫВА!";
+                warningElement.className = "parameter-critical";
+            } else if (reactorState.reactivity > 1.5) {
+                warningElement.textContent = "ВЫСОКАЯ РЕАКТИВНОСТЬ! Будьте осторожны!";
+                warningElement.className = "parameter-warning";
+            } else {
+                warningElement.textContent = "Нормальная реактивность";
+                warningElement.className = "parameter-warning";
+            }
+        }
+
+        function activateAZ5() {
+            if (reactorState.explosionTriggered) return;
+            
+            reactorState.az5Activated = true;
+            document.getElementById('az5Warning').textContent = "АЗ-5 АКТИВИРОВАНА! Стержни опускаются...";
+            document.getElementById('az5Warning').className = "parameter-critical";
+            
+            // Если реактивность выше 3.0, происходит взрыв (как в Чернобыле)
+            if (reactorState.reactivity >= 3.0) {
+                setTimeout(() => {
+                    document.getElementById('az5Warning').textContent = "ВЗРЫВ РЕАКТОРА! Стержни вызвали скачок мощности!";
+                    reactorState.explosionTriggered = true;
+                    startExplosionSequence();
+                }, 2000);
+            } else {
+                setTimeout(() => {
+                    document.getElementById('az5Warning').textContent = "Реактор успешно остановлен";
+                    document.getElementById('az5Warning').className = "parameter-warning";
+                    
+                    // Сбрасываем параметры реактора
+                    reactorState.power = 0;
+                    reactorState.controlRods = 211;
+                    updatePower(0);
+                    updateRods(211);
+                }, 3000);
+            }
+        }
+
+        // Функции управления
+        function startExplosionSequence() {
+            if (!controls.explosionStarted) {
+                controls.explosionStarted = true;
+                updateStatus("💥 ВЗРЫВ РЕАКТОРА!", "catastrophe");
+                
+                // Воспроизводим звук взрыва
+                playExplosionSound();
+                
+                // Воспроизводим звук сирены
+                playSirenSound();
+                
+                // Воспроизводим звук ядерной тревоги
+                playNuclearAlarm();
+                
+                // Создаем эффекты взрыва
+                createExplosionEffects();
+                
+                // Выключаем свет везде
+                toggleLights(false);
+                stationLightsOn = false;
+                updateStationLights();
+                
+                setTimeout(() => {
+                    updateStatus("🚨 АВАРИЙНАЯ СИТУАЦИЯ", "critical");
+                }, 2000);
+            }
+        }
+
+        function spawnEmergencyVehicles() {
+            updateStatus("🚒 АВАРИЙНАЯ ТЕХНИКА ВЫЕХАЛА", "warning");
+            
+            // Создаем аварийную технику
+            for (let i = 0; i < 3; i++) {
+                const fireTruck = createFireTruck();
+                fireTruck.position.set(-200 + i * 20, 0.5, -100);
+                fireTruck.userData = {
+                    type: 'fire_truck',
+                    speed: 0.1,
+                    targetPosition: new THREE.Vector3(-50 + i * 20, 0.5, -50), // Останавливаются снаружи станции
+                    arrived: false
+                };
+                emergencyVehicles.push(fireTruck);
+                scene.add(fireTruck);
+            }
+        }
+
+        function startRebuildSequence() {
+            controls.explosionStarted = false;
+            controls.processesStopped = false;
+            unit4Destroyed = false;
+            stationLightsOn = true;
+            evacuationStarted = false;
+            reactorState.explosionTriggered = false;
+            reactorState.az5Activated = false;
+            
+            updateStatus("🏗️ ВОССТАНОВЛЕНИЕ НАЧАТО", "normal");
+            
+            // Сбрасываем параметры реактора
+            reactorState.power = 700;
+            reactorState.controlRods = 187;
+            reactorState.reactivity = 0.5;
+            
+            document.getElementById('powerValue').textContent = reactorState.power;
+            document.getElementById('rodsValue').textContent = reactorState.controlRods;
+            document.getElementById('reactivityValue').textContent = reactorState.reactivity;
+            document.getElementById('powerSlider').value = reactorState.power;
+            document.getElementById('rodsSlider').value = reactorState.controlRods;
+            document.getElementById('reactivityWarning').textContent = "Нормальная реактивность";
+            document.getElementById('reactivityWarning').className = "parameter-warning";
+            document.getElementById('az5Warning').textContent = "Нажмите для экстренной остановки реактора";
+            document.getElementById('az5Warning').className = "parameter-warning";
+            
+            // Убираем аварийную технику
+            emergencyVehicles.forEach(vehicle => {
+                scene.remove(vehicle);
+            });
+            emergencyVehicles = [];
+            
+            // Убираем эффекты взрыва
+            explosionEffects.forEach(effect => {
+                scene.remove(effect);
+            });
+            explosionEffects = [];
+            
+            fireEffects.forEach(fire => {
+                scene.remove(fire);
+            });
+            fireEffects = [];
+            
+            debrisParticles.forEach(debris => {
+                scene.remove(debris);
+            });
+            debrisParticles = [];
+            
+            // Убираем черный дым
+            blackSmokeParticles.forEach(smoke => {
+                scene.remove(smoke);
+            });
+            blackSmokeParticles = [];
+            
+            // Убираем радиоактивное облако
+            if (radioactiveCloud) {
+                scene.remove(radioactiveCloud);
+                radioactiveCloud = null;
+            }
+            
+            // Убираем разрушенный энергоблок
+            if (destroyedUnit4) {
+                scene.remove(destroyedUnit4);
+                destroyedUnit4 = null;
+            }
+            
+            // Восстанавливаем 4-й энергоблок
+            const unit4Group = createUnit4();
+            unit4Group.position.set(0, 0, 0);
+            scene.add(unit4Group);
+            
+            // Восстанавливаем реактор
+            const reactorInterior = createReactorInterior(new THREE.MeshPhongMaterial({
+                color: 0x333333,
+                transparent: true,
+                opacity: 0.7,
+                metalness: 0.4,
+                roughness: 0.5
+            }));
+            reactorInterior.position.set(0, 5, 0);
+            scene.add(reactorInterior);
+            
+            // Запускаем процессы обратно
+            machineHallEquipment.forEach(equipment => {
+                equipment.userData.active = true;
+            });
+            
+            // Включаем свет обратно
+            toggleLights(true);
+            updateStationLights();
+            
+            // Возвращаем людей в город
+            if (cityPeople.length < 40) {
+                for (let i = cityPeople.length; i < 40; i++) {
+                    const person = createPerson();
+                    person.position.set(
+                        40 + Math.random() * 320,
+                        0.5,
+                        -320 + Math.random() * 40
+                    );
+                    person.userData = {
+                        type: 'city_person',
+                        direction: new THREE.Vector3((Math.random() - 0.5) * 0.01, 0, (Math.random() - 0.5) * 0.01),
+                        timer: 0,
+                        evacuating: false
+                    };
+                    cityPeople.push(person);
+                    scene.add(person);
+                }
+            }
+            
+            // Возвращаем транспорт в город
+            if (cityVehicles.length < 15) {
+                for (let i = cityVehicles.length; i < 15; i++) {
+                    const vehicle = createCar();
+                    vehicle.position.set(
+                        40 + Math.random() * 320,
+                        0.5,
+                        -300 + (Math.random() - 0.5) * 20
+                    );
+                    vehicle.userData = {
+                        type: 'city_vehicle',
+                        direction: new THREE.Vector3(0.02, 0, 0),
+                        timer: 0
+                    };
+                    cityVehicles.push(vehicle);
+                    scene.add(vehicle);
+                }
+            }
+            
+            // Возвращаем людей в поселение
+            if (settlementPeople.length < 15) {
+                for (let i = settlementPeople.length; i < 15; i++) {
+                    const person = createPerson();
+                    person.position.set(
+                        -50 + Math.random() * 100,
+                        0.5,
+                        -50 + Math.random() * 100
+                    );
+                    person.userData = {
+                        type: 'person',
+                        direction: new THREE.Vector3((Math.random() - 0.5) * 0.01, 0, (Math.random() - 0.5) * 0.01),
+                        timer: 0,
+                        evacuating: false
+                    };
+                    settlementPeople.push(person);
+                    scene.add(person);
+                }
+            }
+            
+            // Возвращаем людей на станцию
+            if (stationPeople.length < 12) {
+                for (let i = stationPeople.length; i < 12; i++) {
+                    const person = createPerson();
+                    person.position.set(
+                        -100 + Math.random() * 200,
+                        0.5,
+                        -80 + Math.random() * 160
+                    );
+                    person.userData = {
+                        type: 'station_person',
+                        direction: new THREE.Vector3((Math.random() - 0.5) * 0.015, 0, (Math.random() - 0.5) * 0.015),
+                        timer: 0,
+                        evacuating: false
+                    };
+                    stationPeople.push(person);
+                    scene.add(person);
+                }
+            }
+            
+            setTimeout(() => {
+                updateStatus("✅ СТАНЦИЯ ВОССТАНОВЛЕНА", "normal");
+            }, 3000);
+        }
+
+        function toggleDayNight() {
+            isDayMode = !isDayMode;
+            setupLighting();
+        }
+
+        function switchToStation() {
+            currentLocation = 'station';
+            cameraControls.resetCamera();
+            updateLocationButtons();
+        }
+
+        function switchToCity() {
+            currentLocation = 'city';
+            cameraControls.resetCamera();
+            updateLocationButtons();
+        }
+
+        function switchToSettlement() {
+            currentLocation = 'settlement';
+            cameraControls.resetCamera();
+            updateLocationButtons();
+        }
+
+        function switchToBridge() {
+            currentLocation = 'bridge';
+            cameraControls.resetCamera();
+            updateLocationButtons();
+        }
+
+        function updateLocationButtons() {
+            const buttons = document.querySelectorAll('.compact-controls button');
+            buttons[0].classList.toggle('active', currentLocation === 'station');
+            buttons[1].classList.toggle('active', currentLocation === 'city');
+            buttons[2].classList.toggle('active', currentLocation === 'settlement');
+            buttons[3].classList.toggle('active', currentLocation === 'bridge');
+        }
+
+        function updateStatus(text, level) {
+            const indicator = document.getElementById('statusIndicator');
+            const textElement = document.getElementById('statusText');
+            
+            textElement.textContent = text;
+            indicator.className = 'status-indicator ' + level;
+        }
+
+        // Инициализация сцены
+        setupLighting();
+        const cameraControls = new CameraControls(camera);
+
+        const ground = createGround();
+        scene.add(ground);
+
+        const nuclearPlant = createExactChernobylPlant();
+        scene.add(nuclearPlant);
+
+        const city = createCity();
+        scene.add(city);
+
+        const settlement = createSettlement();
+        scene.add(settlement);
+
+        const bridge = createBridge();
+        scene.add(bridge);
+
+        // Добавляем людей на станцию
+        const stationPeopleGroup = createStationPeople();
+        scene.add(stationPeopleGroup);
+
+        // Основной цикл анимации
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (controls.explosionStarted) {
+                controls.explosionTime += 0.016;
+                document.getElementById('timeValue').textContent = controls.explosionTime.toFixed(1);
+            }
+            
+            // Анимация людей и транспорта
+            animatePeopleAndVehicles();
+            
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', function() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>
