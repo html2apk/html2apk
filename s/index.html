@@ -18,11 +18,13 @@
             <a href='/faq' target='_blank'>FAQ</a>
         </div>
         <h1>html2apk</h1>
-        <p class='jumbo'>Turn a website into an Android application in seconds.</p>
+        <p class='jumbo'>Turn a website or local HTML file into an Android application in seconds.</p>
         <form action="/apk">
             <!-- url -->
             <label for="url">Url</label>
             <input id='url' name='url' type="url" placeholder='e.g. https://html2apk.com/' required />
+            <label for="htmlFile">Or choose a local HTML file (optional)</label>
+            <input id="htmlFile" type="file" accept=".html,text/html" />
             <!-- label -->
             <label for="label">Label</label>
             <input id='label' name='label' type="text" required placeholder="e.g. Cool App" />
@@ -5823,6 +5825,54 @@
             <input class='success' type="submit" value='Download apk'>
         </form>
     </div>
+    <script>
+        const form = document.querySelector('form');
+        const urlInput = document.getElementById('url');
+        const htmlInput = document.getElementById('htmlFile');
+
+        htmlInput.addEventListener('change', () => {
+            urlInput.required = htmlInput.files.length === 0;
+        });
+
+        form.addEventListener('submit', async event => {
+            if (!htmlInput.files.length) {
+                return;
+            }
+
+            event.preventDefault();
+            const submit = form.querySelector('[type="submit"]');
+            submit.disabled = true;
+
+            try {
+                const metadata = new URLSearchParams();
+                new FormData(form).forEach((value, key) => {
+                    if (key !== 'url' && typeof value === 'string') {
+                        metadata.append(key, value);
+                    }
+                });
+
+                const response = await fetch(`/apk/local?${metadata.toString()}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+                    body: htmlInput.files[0]
+                });
+                if (!response.ok) {
+                    throw new Error(await response.text());
+                }
+
+                const apkUrl = URL.createObjectURL(await response.blob());
+                const link = document.createElement('a');
+                link.href = apkUrl;
+                link.download = 'app.apk';
+                link.click();
+                window.setTimeout(() => URL.revokeObjectURL(apkUrl), 1000);
+            } catch (error) {
+                window.alert(error.message);
+            } finally {
+                submit.disabled = false;
+            }
+        });
+    </script>
 </body>
 
 </html>
