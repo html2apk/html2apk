@@ -21,3 +21,7 @@ You will need to create a Google Play developer account, then upload the generat
 __I have a suggestion__
 
 I will love to [hear about it](https://github.com/html2apk/html2apk/issues)
+
+__Can I package a local HTML file?__
+
+Choose a local `.html` file in the converter form to include it in the APK as an Android asset. Local HTML uploads are limited to 10 MB. The HTML file is available offline in the app; linked files are not bundled, so use embedded resources or host those resources online.

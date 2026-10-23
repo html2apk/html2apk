@@ -1,4 +1,4 @@
-export function mainActivity(pkg: string, url: string) {
+export function mainActivity(pkg: string, url: string, isLocal: boolean = false) {
     return `
     package ${pkg};
 
@@ -79,6 +79,9 @@ export function mainActivity(pkg: string, url: string) {
     
                 @Override
                 public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
+                    if (url.startsWith("file:///android_asset/")) {
+                        return false;
+                    }
                     if (URLUtil.isNetworkUrl(url)) {
                         progDailog.show();
                         view.loadUrl(url);
@@ -90,7 +93,7 @@ export function mainActivity(pkg: string, url: string) {
                 }
             });
     
-            webView.loadUrl("${url}");
+            webView.loadUrl("${isLocal ? 'file:///android_asset/index.html' : url}");
         }
     }
 `
